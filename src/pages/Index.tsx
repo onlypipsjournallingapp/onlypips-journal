@@ -5,38 +5,42 @@ import Auth from './Auth';
 import Dashboard from './Dashboard';
 import Trades from './Trades';
 import MainLayout from '@/components/Layout/MainLayout';
+import { supabase } from '@/integrations/supabase/client';
+import { Session } from '@supabase/supabase-js';
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkAuth = async () => {
-      try {
-        // This would be replaced with actual Supabase auth check
-        const savedUser = localStorage.getItem('onlypips-user');
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
-        }
-      } catch (error) {
-        console.error('Auth check error:', error);
-      } finally {
-        setIsLoading(false);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
       }
-    };
-    
-    checkAuth();
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleLogin = (userData: any) => {
-    setUser(userData);
-    localStorage.setItem('onlypips-user', JSON.stringify(userData));
+    setUser(userData.user);
+    setSession(userData);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('onlypips-user');
+    setSession(null);
   };
 
   if (isLoading) {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,43 +43,19 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
     setIsLoading(true);
 
     try {
-      // Determine result based on profit/loss value or break-even setting
-      let result: 'WIN' | 'LOSS' | 'BREAK EVEN';
-      let finalProfitLoss = 0;
-      
-      if (isBreakEven) {
-        result = 'BREAK EVEN';
-      } else {
-        const plValue = parseFloat(profitLoss);
-        if (isNaN(plValue)) {
-          toast({
-            title: "Invalid Profit/Loss value",
-            description: "Please enter a valid number for Profit/Loss",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-        
-        result = plValue > 0 ? 'WIN' : plValue < 0 ? 'LOSS' : 'BREAK EVEN';
-        finalProfitLoss = plValue;
-      }
-
       const formData = {
         pair,
         direction,
         entry_price: entryPrice ? parseFloat(entryPrice) : null,
         exit_price: exitPrice ? parseFloat(exitPrice) : null,
-        profit_loss: finalProfitLoss,
+        profit_loss: isBreakEven ? 0 : parseFloat(profitLoss),
         notes,
-        result,
-        screenshot,
-        is_break_even: isBreakEven
+        is_break_even: isBreakEven,
+        screenshot
       };
 
       await onSubmit(formData);
       
-      // Reset form
       setPair('');
       setDirection('BUY');
       setEntryPrice('');

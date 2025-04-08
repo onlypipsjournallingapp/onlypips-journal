@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import TradeForm from '@/components/Trades/TradeForm';
 import TradeList from '@/components/Trades/TradeList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TradesProps {
   userId: string;
@@ -17,64 +19,19 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
   useEffect(() => {
     const fetchTrades = async () => {
       try {
-        // This would be replaced with actual Supabase query
-        console.log('Fetching trades for user:', userId);
+        setIsLoading(true);
         
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Fetch trades from Supabase
+        const { data, error } = await supabase
+          .from('trades')
+          .select('*')
+          .order('created_at', { ascending: false });
         
-        // Mock data with the new profit_loss field
-        const mockTrades = [
-          {
-            id: '1',
-            pair: 'EUR/USD',
-            direction: 'BUY',
-            entry_price: 1.0750,
-            exit_price: 1.0820,
-            profit_loss: 70.0,
-            result: 'WIN',
-            notes: 'Strong trend following setup at support level.',
-            screenshot_url: 'https://i.imgur.com/knUNqgB.png',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            pair: 'GBP/USD',
-            direction: 'SELL',
-            entry_price: 1.2650,
-            exit_price: 1.2610,
-            profit_loss: 40.0,
-            result: 'WIN',
-            notes: 'Bearish rejection at resistance.',
-            created_at: new Date(Date.now() - 86400000).toISOString(),
-          },
-          {
-            id: '3',
-            pair: 'USD/JPY',
-            direction: 'BUY',
-            entry_price: 149.50,
-            exit_price: 148.90,
-            profit_loss: -60.0,
-            result: 'LOSS',
-            notes: 'Failed breakout trade. Momentum lost after entry.',
-            screenshot_url: 'https://i.imgur.com/NrRd85l.png',
-            created_at: new Date(Date.now() - 172800000).toISOString(),
-          },
-          {
-            id: '4',
-            pair: 'AUD/USD',
-            direction: 'BUY',
-            entry_price: 0.6580,
-            exit_price: 0.6580,
-            profit_loss: 0.0,
-            result: 'BREAK EVEN',
-            is_break_even: true,
-            notes: 'Market indecision at key level.',
-            created_at: new Date(Date.now() - 259200000).toISOString(),
-          },
-        ];
+        if (error) {
+          throw error;
+        }
         
-        setTrades(mockTrades);
+        setTrades(data || []);
       } catch (error) {
         console.error('Error fetching trades:', error);
         toast({
@@ -92,26 +49,81 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
   
   const handleSubmitTrade = async (tradeData: any) => {
     try {
-      // This would be replaced with actual Supabase insert
-      console.log('Submitting trade:', { userId, ...tradeData });
+      // Prepare the trade data for Supabase
+      const newTradeData = {
+        user_id: userId,
+        pair: tradeData.pair,
+        direction: tradeData.direction,
+        entry_price: tradeData.entry_price || null,
+        exit_price: tradeData.exit_price || null,
+        profit_loss: tradeData.is_break_even ? 0 : parseFloat(tradeData.profit_loss),
+        result: tradeData.is_break_even ? 'BREAK EVEN' : 
+                parseFloat(tradeData.profit_loss) > 0 ? 'WIN' : 'LOSS',
+        is_break_even: tradeData.is_break_even || false,
+        notes: tradeData.notes || null
+      };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Insert new trade into Supabase
+      const { data, error } = await supabase
+        .from('trades')
+        .insert(newTradeData)
+        .select()
+        .single();
       
-      // Create a new trade with mock data
-      const newTrade = {
-        id: Date.now().toString(),
-        ...tradeData,
-        screenshot_url: tradeData.screenshot ? URL.createObjectURL(tradeData.screenshot) : undefined,
-        created_at: new Date().toISOString(),
+      if (error) throw error;
+      
+      // If there's a screenshot, upload it
+      let screenshotUrl = null;
+      if (tradeData.screenshot && data) {
+        const fileExt = tradeData.screenshot.name.split('.').pop();
+        const fileName = `${userId}/${data.id}.${fileExt}`;
+        
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from('trades')
+          .upload(fileName, tradeData.screenshot);
+        
+        if (uploadError) throw uploadError;
+        
+        // Get the public URL for the uploaded file
+        const { data: { publicUrl } } = supabase.storage
+          .from('trades')
+          .getPublicUrl(fileName);
+          
+        screenshotUrl = publicUrl;
+        
+        // Update the trade with screenshot URL
+        if (screenshotUrl) {
+          const { error: updateError } = await supabase
+            .from('trades')
+            .update({ screenshot_url: screenshotUrl })
+            .eq('id', data.id);
+          
+          if (updateError) throw updateError;
+        }
+      }
+      
+      // Get the final trade with screenshot URL if applicable
+      const finalTrade = {
+        ...data,
+        screenshot_url: screenshotUrl
       };
       
       // Update local state
-      setTrades([newTrade, ...trades]);
+      setTrades([finalTrade, ...trades]);
       
-      return newTrade;
+      toast({
+        title: "Trade Added",
+        description: "Your trade has been successfully recorded.",
+      });
+      
+      return finalTrade;
     } catch (error) {
       console.error('Error submitting trade:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add trade. Please try again.",
+        variant: "destructive",
+      });
       throw error;
     }
   };

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import TradeStats from '@/components/Dashboard/TradeStats';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowUpCircle, MinusCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardProps {
   userId: string;
@@ -15,62 +16,19 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
   useEffect(() => {
     const fetchTrades = async () => {
       try {
-        // This would be replaced with actual Supabase query
-        console.log('Fetching trades for user:', userId);
+        setIsLoading(true);
         
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Fetch trades from Supabase
+        const { data, error } = await supabase
+          .from('trades')
+          .select('*')
+          .order('created_at', { ascending: false });
         
-        // Mock data with the new profit_loss field
-        const mockTrades = [
-          {
-            id: '1',
-            pair: 'EUR/USD',
-            direction: 'BUY',
-            entry_price: 1.0750,
-            exit_price: 1.0820,
-            profit_loss: 70.0,
-            result: 'WIN',
-            notes: 'Strong trend following setup at support level.',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            pair: 'GBP/USD',
-            direction: 'SELL',
-            entry_price: 1.2650,
-            exit_price: 1.2610,
-            profit_loss: 40.0,
-            result: 'WIN',
-            notes: 'Bearish rejection at resistance.',
-            created_at: new Date(Date.now() - 86400000).toISOString(),
-          },
-          {
-            id: '3',
-            pair: 'USD/JPY',
-            direction: 'BUY',
-            entry_price: 149.50,
-            exit_price: 148.90,
-            profit_loss: -60.0,
-            result: 'LOSS',
-            notes: 'Failed breakout trade. Momentum lost after entry.',
-            created_at: new Date(Date.now() - 172800000).toISOString(),
-          },
-          {
-            id: '4',
-            pair: 'AUD/USD',
-            direction: 'BUY',
-            entry_price: 0.6580,
-            exit_price: 0.6580,
-            profit_loss: 0.0,
-            result: 'BREAK EVEN',
-            is_break_even: true,
-            notes: 'Market indecision at key level.',
-            created_at: new Date(Date.now() - 259200000).toISOString(),
-          },
-        ];
+        if (error) {
+          throw error;
+        }
         
-        setTrades(mockTrades);
+        setTrades(data || []);
       } catch (error) {
         console.error('Error fetching trades:', error);
       } finally {
