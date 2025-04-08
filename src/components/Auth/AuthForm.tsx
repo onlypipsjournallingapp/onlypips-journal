@@ -8,33 +8,26 @@ import { useToast } from "@/hooks/use-toast";
 interface AuthFormProps {
   onLogin: (email: string, password: string) => void;
   onRegister: (email: string, password: string) => void;
+  isLoading?: boolean;
 }
 
-const AuthForm: React.FC<AuthFormProps> = ({ onLogin, onRegister }) => {
-  const [isLogin, setIsLogin] = useState(true);
+const AuthForm: React.FC<AuthFormProps> = ({ onLogin, onRegister, isLoading = false }) => {
+  const [isLoginView, setIsLoginView] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
     try {
-      if (isLogin) {
+      if (isLoginView) {
         await onLogin(email, password);
       } else {
         await onRegister(email, password);
       }
     } catch (error) {
-      toast({
-        title: "Authentication Error",
-        description: "Failed to authenticate. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // Error is handled in parent component
     }
   };
 
@@ -43,10 +36,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ onLogin, onRegister }) => {
       <Card className="glass-card animate-fade-in">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold tracking-tight">
-            {isLogin ? 'Login' : 'Create an account'}
+            {isLoginView ? 'Login' : 'Create an account'}
           </CardTitle>
           <CardDescription>
-            {isLogin
+            {isLoginView
               ? 'Enter your credentials to access your account'
               : 'Enter your information to create an account'}
           </CardDescription>
@@ -66,6 +59,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onLogin, onRegister }) => {
                 autoCorrect="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
                 required
               />
             </div>
@@ -77,9 +71,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ onLogin, onRegister }) => {
                 id="password"
                 placeholder="••••••••"
                 type="password"
-                autoComplete={isLogin ? "current-password" : "new-password"}
+                autoComplete={isLoginView ? "current-password" : "new-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
                 required
               />
             </div>
@@ -90,15 +85,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ onLogin, onRegister }) => {
               className="w-full mb-2" 
               disabled={isLoading}
             >
-              {isLogin ? 'Login' : 'Create Account'}
+              {isLoading ? 'Processing...' : isLoginView ? 'Login' : 'Create Account'}
             </Button>
             <Button
               type="button"
               variant="ghost"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => setIsLoginView(!isLoginView)}
               disabled={isLoading}
             >
-              {isLogin ? 'Need an account? Register' : 'Already have an account? Login'}
+              {isLoginView ? 'Need an account? Register' : 'Already have an account? Login'}
             </Button>
           </CardFooter>
         </form>

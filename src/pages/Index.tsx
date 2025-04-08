@@ -17,6 +17,7 @@ const Index = () => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log("Auth state changed:", event, currentSession?.user?.email);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
       }
@@ -24,6 +25,7 @@ const Index = () => {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Initial session check:", currentSession?.user?.email);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setIsLoading(false);
@@ -33,6 +35,7 @@ const Index = () => {
   }, []);
 
   const handleLogin = (userData: any) => {
+    console.log("Login handler triggered", userData);
     setUser(userData.user);
     setSession(userData);
   };

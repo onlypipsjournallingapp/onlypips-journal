@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import AuthForm from '@/components/Auth/AuthForm';
 import { TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthProps {
-  onLogin: (user: any) => void;
+  onLogin: (userData: any) => void;
 }
 
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
@@ -15,25 +16,25 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // This would be replaced with actual Supabase auth
-      console.log('Login attempt with:', email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      if (error) throw error;
       
-      // Simulate successful login
-      const mockUser = { id: '123', email };
-      onLogin(mockUser);
+      console.log("Login successful:", data);
+      onLogin(data);
       
       toast({
         title: "Login Successful",
         description: "Welcome back to OnlyPips Journal!",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
       toast({
         title: "Login Failed",
-        description: "Invalid credentials. Please try again.",
+        description: error.message || "Invalid credentials. Please try again.",
         variant: "destructive",
       });
       throw error;
@@ -45,25 +46,25 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const handleRegister = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // This would be replaced with actual Supabase auth
-      console.log('Register attempt with:', email, password);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+      });
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (error) throw error;
       
-      // Simulate successful registration and auto-login
-      const mockUser = { id: '123', email };
-      onLogin(mockUser);
+      console.log("Registration successful:", data);
+      onLogin(data);
       
       toast({
         title: "Registration Successful",
         description: "Welcome to OnlyPips Journal! Your account has been created.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
       toast({
         title: "Registration Failed",
-        description: "Could not create your account. Please try again.",
+        description: error.message || "Could not create your account. Please try again.",
         variant: "destructive",
       });
       throw error;
@@ -83,7 +84,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         <p className="text-muted-foreground">The trading journal for serious traders</p>
       </div>
       
-      <AuthForm onLogin={handleLogin} onRegister={handleRegister} />
+      <AuthForm onLogin={handleLogin} onRegister={handleRegister} isLoading={isLoading} />
       
       <p className="mt-8 text-center text-sm text-muted-foreground">
         By using this service, you agree to our Terms of Service and Privacy Policy.
