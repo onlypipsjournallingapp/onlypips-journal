@@ -21,6 +21,7 @@ export type Database = {
           pair: string
           profit_loss: number
           result: string
+          screenshot_url: string | null
           updated_at: string
           user_id: string
         }
@@ -35,6 +36,7 @@ export type Database = {
           pair: string
           profit_loss: number
           result: string
+          screenshot_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -49,6 +51,7 @@ export type Database = {
           pair?: string
           profit_loss?: number
           result?: string
+          screenshot_url?: string | null
           updated_at?: string
           user_id?: string
         }

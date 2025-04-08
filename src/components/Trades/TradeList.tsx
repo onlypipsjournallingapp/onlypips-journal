@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -90,7 +89,7 @@ const TradeCard: React.FC<{ trade: Trade }> = ({ trade }) => {
                   <DialogTrigger asChild>
                     <div className="relative w-full h-24 cursor-pointer overflow-hidden rounded-md border hover:opacity-80 transition-opacity">
                       <img 
-                        src={trade.screenshot_url as string} 
+                        src={trade.screenshot_url} 
                         alt={`Chart of ${trade.pair}`}
                         className="w-full h-full object-cover"
                       />
@@ -107,7 +106,7 @@ const TradeCard: React.FC<{ trade: Trade }> = ({ trade }) => {
                     </DialogHeader>
                     <div className="overflow-hidden rounded-md">
                       <img 
-                        src={trade.screenshot_url as string} 
+                        src={trade.screenshot_url} 
                         alt={`Chart of ${trade.pair}`}
                         className="w-full h-auto"
                       />
