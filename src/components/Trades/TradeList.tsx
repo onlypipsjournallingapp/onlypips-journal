@@ -4,20 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronUp, Image, MinusCircle } from "lucide-react";
+import { Database } from '@/integrations/supabase/types';
 
-interface Trade {
-  id: string;
-  pair: string;
-  direction: 'BUY' | 'SELL';
-  entry_price?: number | null;
-  exit_price?: number | null;
-  profit_loss: number;
-  result: 'WIN' | 'LOSS' | 'BREAK EVEN';
-  is_break_even?: boolean;
-  notes?: string;
-  screenshot_url?: string;
-  created_at: string;
-}
+type Trade = Database['public']['Tables']['trades']['Row'];
 
 interface TradeListProps {
   trades: Trade[];
@@ -81,7 +70,7 @@ const TradeCard: React.FC<{ trade: Trade }> = ({ trade }) => {
               )}
               {trade.result !== 'BREAK EVEN' && !trade.is_break_even && (
                 <div className="text-sm">
-                  <span className="text-muted-foreground">P/L:</span> {trade.profit_loss > 0 ? '+' : ''}{trade.profit_loss}
+                  <span className="text-muted-foreground">P/L:</span> {Number(trade.profit_loss) > 0 ? '+' : ''}{trade.profit_loss}
                 </div>
               )}
               <div className="text-sm">
@@ -101,7 +90,7 @@ const TradeCard: React.FC<{ trade: Trade }> = ({ trade }) => {
                   <DialogTrigger asChild>
                     <div className="relative w-full h-24 cursor-pointer overflow-hidden rounded-md border hover:opacity-80 transition-opacity">
                       <img 
-                        src={trade.screenshot_url} 
+                        src={trade.screenshot_url as string} 
                         alt={`Chart of ${trade.pair}`}
                         className="w-full h-full object-cover"
                       />
@@ -118,7 +107,7 @@ const TradeCard: React.FC<{ trade: Trade }> = ({ trade }) => {
                     </DialogHeader>
                     <div className="overflow-hidden rounded-md">
                       <img 
-                        src={trade.screenshot_url} 
+                        src={trade.screenshot_url as string} 
                         alt={`Chart of ${trade.pair}`}
                         className="w-full h-auto"
                       />

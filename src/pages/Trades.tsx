@@ -6,13 +6,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 
 interface TradesProps {
   userId: string;
 }
 
+// Define trade type based on the database schema
+type Trade = Database['public']['Tables']['trades']['Row'];
+
 const Trades: React.FC<TradesProps> = ({ userId }) => {
-  const [trades, setTrades] = useState([]);
+  const [trades, setTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -106,7 +110,7 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
       const finalTrade = {
         ...data,
         screenshot_url: screenshotUrl
-      };
+      } as Trade;
       
       // Update local state
       setTrades([finalTrade, ...trades]);

@@ -4,13 +4,17 @@ import TradeStats from '@/components/Dashboard/TradeStats';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowUpCircle, MinusCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 
 interface DashboardProps {
   userId: string;
 }
 
+// Define trade type based on our database schema
+type Trade = Database['public']['Tables']['trades']['Row'];
+
 const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
-  const [trades, setTrades] = useState([]);
+  const [trades, setTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -62,7 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
             <div className="mt-8 animate-fade-in" style={{animationDelay: '800ms'}}>
               <h2 className="text-xl font-semibold mb-4">Recent Trades</h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {trades.slice(0, 3).map((trade: any) => (
+                {trades.slice(0, 3).map((trade) => (
                   <Card key={trade.id} className="glass-card card-animate">
                     <CardHeader className="pb-2">
                       <div className="flex justify-between">
@@ -104,7 +108,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
                           <>
                             <div className="text-muted-foreground">P/L</div>
                             <div className="text-right">
-                              {trade.profit_loss > 0 ? '+' : ''}{trade.profit_loss}
+                              {Number(trade.profit_loss) > 0 ? '+' : ''}{trade.profit_loss}
                             </div>
                           </>
                         )}

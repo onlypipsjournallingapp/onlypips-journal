@@ -4,15 +4,9 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import StatsCard from './StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ActivitySquare, BarChart3, Percent, TrendingUp } from 'lucide-react';
+import { Database } from '@/integrations/supabase/types';
 
-interface Trade {
-  result: 'WIN' | 'LOSS' | 'BREAK EVEN';
-  entry_price?: number | null;
-  exit_price?: number | null;
-  profit_loss: number;
-  direction: 'BUY' | 'SELL';
-  is_break_even?: boolean;
-}
+type Trade = Database['public']['Tables']['trades']['Row'];
 
 interface TradeStatsProps {
   trades: Trade[];
@@ -32,7 +26,7 @@ const TradeStats: React.FC<TradeStatsProps> = ({ trades }) => {
   
   // Calculate total and average P/L using the user's manually entered values
   const totalProfitLoss = trades.reduce((total, trade) => {
-    return total + trade.profit_loss;
+    return total + Number(trade.profit_loss);
   }, 0);
   
   const avgProfitLossNumber = totalTrades > 0 ? totalProfitLoss / totalTrades : 0;
