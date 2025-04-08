@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import TradeStats from '@/components/Dashboard/TradeStats';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpCircle } from 'lucide-react';
+import { ArrowUpCircle, MinusCircle } from 'lucide-react';
 
 interface DashboardProps {
   userId: string;
@@ -21,7 +21,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Mock data
+        // Mock data with the new profit_loss field
         const mockTrades = [
           {
             id: '1',
@@ -29,6 +29,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
             direction: 'BUY',
             entry_price: 1.0750,
             exit_price: 1.0820,
+            profit_loss: 70.0,
             result: 'WIN',
             notes: 'Strong trend following setup at support level.',
             created_at: new Date().toISOString(),
@@ -39,6 +40,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
             direction: 'SELL',
             entry_price: 1.2650,
             exit_price: 1.2610,
+            profit_loss: 40.0,
             result: 'WIN',
             notes: 'Bearish rejection at resistance.',
             created_at: new Date(Date.now() - 86400000).toISOString(),
@@ -49,9 +51,22 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
             direction: 'BUY',
             entry_price: 149.50,
             exit_price: 148.90,
+            profit_loss: -60.0,
             result: 'LOSS',
             notes: 'Failed breakout trade. Momentum lost after entry.',
             created_at: new Date(Date.now() - 172800000).toISOString(),
+          },
+          {
+            id: '4',
+            pair: 'AUD/USD',
+            direction: 'BUY',
+            entry_price: 0.6580,
+            exit_price: 0.6580,
+            profit_loss: 0.0,
+            result: 'BREAK EVEN',
+            is_break_even: true,
+            notes: 'Market indecision at key level.',
+            created_at: new Date(Date.now() - 259200000).toISOString(),
           },
         ];
         
@@ -103,7 +118,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
                         </div>
                       </div>
                       <CardDescription className="flex items-center text-xs">
-                        {trade.direction === 'BUY' ? (
+                        {trade.result === 'BREAK EVEN' || trade.is_break_even ? (
+                          <MinusCircle className="h-3 w-3 mr-1 text-neutral" />
+                        ) : trade.direction === 'BUY' ? (
                           <ArrowUpCircle className="h-3 w-3 mr-1 text-profit" />
                         ) : (
                           <ArrowUpCircle className="h-3 w-3 mr-1 text-loss transform rotate-180" />
@@ -113,10 +130,26 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
                     </CardHeader>
                     <CardContent className="text-sm">
                       <div className="grid grid-cols-2 gap-1 mb-2">
-                        <div className="text-muted-foreground">Entry</div>
-                        <div className="text-right">{trade.entry_price}</div>
-                        <div className="text-muted-foreground">Exit</div>
-                        <div className="text-right">{trade.exit_price}</div>
+                        {trade.entry_price !== null && trade.entry_price !== undefined && (
+                          <>
+                            <div className="text-muted-foreground">Entry</div>
+                            <div className="text-right">{trade.entry_price}</div>
+                          </>
+                        )}
+                        {trade.exit_price !== null && trade.exit_price !== undefined && (
+                          <>
+                            <div className="text-muted-foreground">Exit</div>
+                            <div className="text-right">{trade.exit_price}</div>
+                          </>
+                        )}
+                        {trade.result !== 'BREAK EVEN' && !trade.is_break_even && (
+                          <>
+                            <div className="text-muted-foreground">P/L</div>
+                            <div className="text-right">
+                              {trade.profit_loss > 0 ? '+' : ''}{trade.profit_loss}
+                            </div>
+                          </>
+                        )}
                       </div>
                       {trade.notes && (
                         <p className="text-xs text-muted-foreground line-clamp-2 mt-2">

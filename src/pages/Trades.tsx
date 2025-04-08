@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TradeForm from '@/components/Trades/TradeForm';
 import TradeList from '@/components/Trades/TradeList';
@@ -24,7 +23,7 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Mock data - same as in Dashboard
+        // Mock data with the new profit_loss field
         const mockTrades = [
           {
             id: '1',
@@ -32,6 +31,7 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
             direction: 'BUY',
             entry_price: 1.0750,
             exit_price: 1.0820,
+            profit_loss: 70.0,
             result: 'WIN',
             notes: 'Strong trend following setup at support level.',
             screenshot_url: 'https://i.imgur.com/knUNqgB.png',
@@ -43,6 +43,7 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
             direction: 'SELL',
             entry_price: 1.2650,
             exit_price: 1.2610,
+            profit_loss: 40.0,
             result: 'WIN',
             notes: 'Bearish rejection at resistance.',
             created_at: new Date(Date.now() - 86400000).toISOString(),
@@ -53,10 +54,23 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
             direction: 'BUY',
             entry_price: 149.50,
             exit_price: 148.90,
+            profit_loss: -60.0,
             result: 'LOSS',
             notes: 'Failed breakout trade. Momentum lost after entry.',
             screenshot_url: 'https://i.imgur.com/NrRd85l.png',
             created_at: new Date(Date.now() - 172800000).toISOString(),
+          },
+          {
+            id: '4',
+            pair: 'AUD/USD',
+            direction: 'BUY',
+            entry_price: 0.6580,
+            exit_price: 0.6580,
+            profit_loss: 0.0,
+            result: 'BREAK EVEN',
+            is_break_even: true,
+            notes: 'Market indecision at key level.',
+            created_at: new Date(Date.now() - 259200000).toISOString(),
           },
         ];
         

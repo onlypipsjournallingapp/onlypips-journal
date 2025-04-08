@@ -3,15 +3,17 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronUp, Image } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronUp, Image, MinusCircle } from "lucide-react";
 
 interface Trade {
   id: string;
   pair: string;
   direction: 'BUY' | 'SELL';
-  entry_price: number;
-  exit_price: number;
+  entry_price?: number | null;
+  exit_price?: number | null;
+  profit_loss: number;
   result: 'WIN' | 'LOSS' | 'BREAK EVEN';
+  is_break_even?: boolean;
   notes?: string;
   screenshot_url?: string;
   created_at: string;
@@ -45,7 +47,9 @@ const TradeCard: React.FC<{ trade: Trade }> = ({ trade }) => {
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-3">
-          {trade.direction === 'BUY' ? (
+          {trade.result === 'BREAK EVEN' || trade.is_break_even ? (
+            <MinusCircle className="h-5 w-5 text-neutral" />
+          ) : trade.direction === 'BUY' ? (
             <ArrowUpCircle className="h-5 w-5 text-profit" />
           ) : (
             <ArrowDownCircle className="h-5 w-5 text-loss" />
@@ -65,12 +69,21 @@ const TradeCard: React.FC<{ trade: Trade }> = ({ trade }) => {
         <CardContent className="pt-0 animate-fade-in">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <div className="text-sm">
-                <span className="text-muted-foreground">Entry:</span> {trade.entry_price}
-              </div>
-              <div className="text-sm">
-                <span className="text-muted-foreground">Exit:</span> {trade.exit_price}
-              </div>
+              {trade.entry_price !== null && trade.entry_price !== undefined && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Entry:</span> {trade.entry_price}
+                </div>
+              )}
+              {trade.exit_price !== null && trade.exit_price !== undefined && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Exit:</span> {trade.exit_price}
+                </div>
+              )}
+              {trade.result !== 'BREAK EVEN' && !trade.is_break_even && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">P/L:</span> {trade.profit_loss > 0 ? '+' : ''}{trade.profit_loss}
+                </div>
+              )}
               <div className="text-sm">
                 <span className="text-muted-foreground">Date:</span> {formatDate(trade.created_at)}
               </div>

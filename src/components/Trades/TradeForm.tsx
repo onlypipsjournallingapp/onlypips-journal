@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowDownCircle, ArrowUpCircle, Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface TradeFormProps {
   onSubmit: (tradeData: any) => void;
@@ -25,23 +26,12 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
   const [direction, setDirection] = useState<'BUY' | 'SELL'>('BUY');
   const [entryPrice, setEntryPrice] = useState('');
   const [exitPrice, setExitPrice] = useState('');
+  const [profitLoss, setProfitLoss] = useState('');
+  const [isBreakEven, setIsBreakEven] = useState(false);
   const [notes, setNotes] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  const calculateResult = () => {
-    const entry = parseFloat(entryPrice);
-    const exit = parseFloat(exitPrice);
-    
-    if (isNaN(entry) || isNaN(exit)) return null;
-    
-    if (direction === 'BUY') {
-      return exit > entry ? 'WIN' : exit < entry ? 'LOSS' : 'BREAK EVEN';
-    } else {
-      return exit < entry ? 'WIN' : exit > entry ? 'LOSS' : 'BREAK EVEN';
-    }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -53,26 +43,39 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = calculateResult();
-    if (!result) {
-      toast({
-        title: "Invalid Prices",
-        description: "Please enter valid entry and exit prices",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
     try {
+      // Determine result based on profit/loss value or break-even setting
+      let result: 'WIN' | 'LOSS' | 'BREAK EVEN';
+      let finalProfitLoss = 0;
+      
+      if (isBreakEven) {
+        result = 'BREAK EVEN';
+      } else {
+        const plValue = parseFloat(profitLoss);
+        if (isNaN(plValue)) {
+          toast({
+            title: "Invalid Profit/Loss value",
+            description: "Please enter a valid number for Profit/Loss",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        result = plValue > 0 ? 'WIN' : plValue < 0 ? 'LOSS' : 'BREAK EVEN';
+        finalProfitLoss = plValue;
+      }
+
       const formData = {
         pair,
         direction,
-        entry_price: parseFloat(entryPrice),
-        exit_price: parseFloat(exitPrice),
+        entry_price: entryPrice ? parseFloat(entryPrice) : null,
+        exit_price: exitPrice ? parseFloat(exitPrice) : null,
+        profit_loss: finalProfitLoss,
         notes,
         result,
         screenshot,
+        is_break_even: isBreakEven
       };
 
       await onSubmit(formData);
@@ -82,6 +85,8 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
       setDirection('BUY');
       setEntryPrice('');
       setExitPrice('');
+      setProfitLoss('');
+      setIsBreakEven(false);
       setNotes('');
       setScreenshot(null);
       
@@ -149,7 +154,7 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="entryPrice">Entry Price</Label>
+              <Label htmlFor="entryPrice">Entry Price (Optional)</Label>
               <Input
                 id="entryPrice"
                 placeholder="0.00"
@@ -157,11 +162,10 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
                 step="any"
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
-                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="exitPrice">Exit Price</Label>
+              <Label htmlFor="exitPrice">Exit Price (Optional)</Label>
               <Input
                 id="exitPrice"
                 placeholder="0.00"
@@ -169,9 +173,35 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
                 step="any"
                 value={exitPrice}
                 onChange={(e) => setExitPrice(e.target.value)}
-                required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2 mb-2">
+              <Checkbox 
+                id="isBreakEven" 
+                checked={isBreakEven}
+                onCheckedChange={(checked) => setIsBreakEven(checked as boolean)}
+              />
+              <Label htmlFor="isBreakEven" className="cursor-pointer">Did this trade hit break-even?</Label>
+            </div>
+            
+            {!isBreakEven && (
+              <div className="space-y-2">
+                <Label htmlFor="profitLoss">Profit / Loss (in your currency)</Label>
+                <Input
+                  id="profitLoss"
+                  placeholder="-10.50 or 25.75"
+                  type="number"
+                  step="any"
+                  value={profitLoss}
+                  onChange={(e) => setProfitLoss(e.target.value)}
+                  required={!isBreakEven}
+                />
+                <p className="text-xs text-muted-foreground">Enter the exact amount made or lost on this trade.</p>
+              </div>
+            )}
           </div>
           
           <div className="space-y-2">

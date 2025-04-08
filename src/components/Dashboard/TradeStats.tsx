@@ -7,9 +7,11 @@ import { ActivitySquare, BarChart3, Percent, TrendingUp } from 'lucide-react';
 
 interface Trade {
   result: 'WIN' | 'LOSS' | 'BREAK EVEN';
-  entry_price: number;
-  exit_price: number;
+  entry_price?: number | null;
+  exit_price?: number | null;
+  profit_loss: number;
   direction: 'BUY' | 'SELL';
+  is_break_even?: boolean;
 }
 
 interface TradeStatsProps {
@@ -22,27 +24,19 @@ const TradeStats: React.FC<TradeStatsProps> = ({ trades }) => {
   
   const wins = trades.filter(trade => trade.result === 'WIN').length;
   const losses = trades.filter(trade => trade.result === 'LOSS').length;
-  const breakEven = trades.filter(trade => trade.result === 'BREAK EVEN').length;
+  const breakEven = trades.filter(trade => trade.result === 'BREAK EVEN' || trade.is_break_even).length;
   
-  const winRate = totalTrades > 0 ? Math.round((wins / totalTrades) * 100) : 0;
+  // Win rate excludes break-even trades
+  const tradesExcludingBreakEven = totalTrades - breakEven;
+  const winRate = tradesExcludingBreakEven > 0 ? Math.round((wins / tradesExcludingBreakEven) * 100) : 0;
   
-  // Calculate average profit/loss
-  const getPipsDifference = (trade: Trade) => {
-    const diff = Math.abs(trade.exit_price - trade.entry_price);
-    // For forex pairs, multiply by 10000 to get pips
-    // This is a simplification - in real app we'd need to know the pair to calculate pips correctly
-    return diff * 10000;
-  };
-  
-  const totalPips = trades.reduce((total, trade) => {
-    const pips = getPipsDifference(trade);
-    if (trade.result === 'WIN') return total + pips;
-    if (trade.result === 'LOSS') return total - pips;
-    return total;
+  // Calculate total and average P/L using the user's manually entered values
+  const totalProfitLoss = trades.reduce((total, trade) => {
+    return total + trade.profit_loss;
   }, 0);
   
-  const avgPipsNumber = totalTrades > 0 ? totalPips / totalTrades : 0;
-  const avgPips = avgPipsNumber.toFixed(1);
+  const avgProfitLossNumber = totalTrades > 0 ? totalProfitLoss / totalTrades : 0;
+  const avgProfitLoss = avgProfitLossNumber.toFixed(1);
   
   // Prepare chart data
   const chartData = [
@@ -63,21 +57,21 @@ const TradeStats: React.FC<TradeStatsProps> = ({ trades }) => {
         <StatsCard 
           title="Win Rate"
           value={`${winRate}%`}
-          description={`${wins} wins out of ${totalTrades} trades`}
+          description={`${wins} wins out of ${tradesExcludingBreakEven} trades (excl. break-even)`}
           icon={<Percent className="h-4 w-4" />}
           delay={200}
         />
         <StatsCard 
           title="Average P/L"
-          value={`${avgPipsNumber > 0 ? '+' : ''}${avgPips}`}
-          description="Average pips per trade"
+          value={`${avgProfitLossNumber > 0 ? '+' : ''}${avgProfitLoss}`}
+          description="Average profit/loss per trade"
           icon={<TrendingUp className="h-4 w-4" />}
           delay={300}
         />
         <StatsCard 
           title="Performance"
           value={winRate > 50 ? 'Profitable' : winRate > 40 ? 'Neutral' : 'Needs Work'}
-          description={`Total P/L: ${totalPips > 0 ? '+' : ''}${totalPips.toFixed(1)} pips`}
+          description={`Total P/L: ${totalProfitLoss > 0 ? '+' : ''}${totalProfitLoss.toFixed(1)}`}
           icon={<BarChart3 className="h-4 w-4" />}
           delay={400}
         />
