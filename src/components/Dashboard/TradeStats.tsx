@@ -41,7 +41,8 @@ const TradeStats: React.FC<TradeStatsProps> = ({ trades }) => {
     return total;
   }, 0);
   
-  const avgPips = totalTrades > 0 ? (totalPips / totalTrades).toFixed(1) : '0';
+  const avgPipsNumber = totalTrades > 0 ? totalPips / totalTrades : 0;
+  const avgPips = avgPipsNumber.toFixed(1);
   
   // Prepare chart data
   const chartData = [
@@ -68,7 +69,7 @@ const TradeStats: React.FC<TradeStatsProps> = ({ trades }) => {
         />
         <StatsCard 
           title="Average P/L"
-          value={`${avgPips > 0 ? '+' : ''}${avgPips}`}
+          value={`${avgPipsNumber > 0 ? '+' : ''}${avgPips}`}
           description="Average pips per trade"
           icon={<TrendingUp className="h-4 w-4" />}
           delay={300}
