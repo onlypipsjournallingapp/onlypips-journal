@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -42,7 +43,12 @@ const TradeCard: React.FC<{ trade: Trade }> = ({ trade }) => {
           ) : (
             <ArrowDownCircle className="h-5 w-5 text-loss" />
           )}
-          <span className="font-medium">{trade.pair}</span>
+          <div className="flex flex-col">
+            <span className="font-medium">{trade.pair}</span>
+            <Badge variant="outline" className="w-fit text-xs">
+              {trade.trade_type}
+            </Badge>
+          </div>
         </div>
         
         <div className="flex items-center gap-3">

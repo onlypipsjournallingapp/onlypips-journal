@@ -9,16 +9,12 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowDownCircle, ArrowUpCircle, Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useCurrencyPairs } from "@/hooks/useCurrencyPairs";
 
 interface TradeFormProps {
   onSubmit: (tradeData: any) => void;
 }
-
-const CURRENCY_PAIRS = [
-  "EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", 
-  "AUD/USD", "USD/CAD", "NZD/USD", "EUR/GBP", 
-  "EUR/JPY", "GBP/JPY", "BTC/USD", "ETH/USD"
-];
 
 const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
   const [pair, setPair] = useState('');
@@ -29,8 +25,10 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
   const [isBreakEven, setIsBreakEven] = useState(false);
   const [notes, setNotes] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [tradeType, setTradeType] = useState<'REAL' | 'DEMO'>('REAL');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { pairs, isLoading: pairsLoading } = useCurrencyPairs();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -51,7 +49,8 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
         profit_loss: isBreakEven ? 0 : parseFloat(profitLoss),
         notes,
         is_break_even: isBreakEven,
-        screenshot
+        screenshot,
+        trade_type: tradeType
       };
 
       await onSubmit(formData);
@@ -91,40 +90,39 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="pair">Currency Pair</Label>
-            <Select value={pair} onValueChange={setPair} required>
+            <Select value={pair} onValueChange={setPair} required disabled={pairsLoading}>
               <SelectTrigger id="pair">
                 <SelectValue placeholder="Select currency pair" />
               </SelectTrigger>
               <SelectContent>
-                {CURRENCY_PAIRS.map((currencyPair) => (
-                  <SelectItem key={currencyPair} value={currencyPair}>
-                    {currencyPair}
+                {pairs.map((currencyPair) => (
+                  <SelectItem 
+                    key={currencyPair.symbol} 
+                    value={currencyPair.symbol}
+                  >
+                    {currencyPair.display_name || currencyPair.symbol}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2">
-            <Label>Direction</Label>
-            <div className="flex items-center justify-between p-3 border rounded-md">
+            <Label>Trade Type</Label>
+            <RadioGroup 
+              value={tradeType} 
+              onValueChange={(value) => setTradeType(value as 'REAL' | 'DEMO')}
+              className="flex items-center space-x-4"
+            >
               <div className="flex items-center space-x-2">
-                <ArrowUpCircle 
-                  className={`w-5 h-5 ${direction === 'BUY' ? 'text-profit' : 'text-muted-foreground'}`} 
-                />
-                <span>BUY</span>
+                <RadioGroupItem value="REAL" id="real" />
+                <Label htmlFor="real">Real</Label>
               </div>
-              <Switch
-                checked={direction === 'SELL'}
-                onCheckedChange={(checked) => setDirection(checked ? 'SELL' : 'BUY')}
-              />
               <div className="flex items-center space-x-2">
-                <span>SELL</span>
-                <ArrowDownCircle 
-                  className={`w-5 h-5 ${direction === 'SELL' ? 'text-loss' : 'text-muted-foreground'}`} 
-                />
+                <RadioGroupItem value="DEMO" id="demo" />
+                <Label htmlFor="demo">Demo</Label>
               </div>
-            </div>
+            </RadioGroup>
           </div>
           
           <div className="grid grid-cols-2 gap-4">

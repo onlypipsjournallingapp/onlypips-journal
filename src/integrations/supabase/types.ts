@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      currency_pairs: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_name: string | null
+          id: string
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           created_at: string
@@ -22,6 +49,7 @@ export type Database = {
           profit_loss: number
           result: string
           screenshot_url: string | null
+          trade_type: string
           updated_at: string
           user_id: string
         }
@@ -37,6 +65,7 @@ export type Database = {
           profit_loss: number
           result: string
           screenshot_url?: string | null
+          trade_type?: string
           updated_at?: string
           user_id: string
         }
@@ -52,6 +81,7 @@ export type Database = {
           profit_loss?: number
           result?: string
           screenshot_url?: string | null
+          trade_type?: string
           updated_at?: string
           user_id?: string
         }

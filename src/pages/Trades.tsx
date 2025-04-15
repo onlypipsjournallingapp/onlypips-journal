@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TradeForm from '@/components/Trades/TradeForm';
 import TradeList from '@/components/Trades/TradeList';
@@ -25,15 +24,12 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
       try {
         setIsLoading(true);
         
-        // Fetch trades from Supabase
         const { data, error } = await supabase
           .from('trades')
           .select('*')
           .order('created_at', { ascending: false });
         
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
         
         setTrades(data || []);
       } catch (error) {
@@ -53,7 +49,6 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
   
   const handleSubmitTrade = async (tradeData: any) => {
     try {
-      // Prepare the trade data for Supabase
       const newTradeData = {
         user_id: userId,
         pair: tradeData.pair,
@@ -64,7 +59,8 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
         result: tradeData.is_break_even ? 'BREAK EVEN' : 
                 parseFloat(tradeData.profit_loss) > 0 ? 'WIN' : 'LOSS',
         is_break_even: tradeData.is_break_even || false,
-        notes: tradeData.notes || null
+        notes: tradeData.notes || null,
+        trade_type: tradeData.trade_type
       };
       
       // Insert new trade into Supabase
