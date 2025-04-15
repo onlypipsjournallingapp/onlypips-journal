@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCurrencyPairs } from "@/hooks/useCurrencyPairs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface TradeFormProps {
   onSubmit: (tradeData: any) => void;
@@ -105,6 +107,25 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Direction</Label>
+            <ToggleGroup 
+              type="single" 
+              value={direction} 
+              onValueChange={(value) => value && setDirection(value as 'BUY' | 'SELL')}
+              className="justify-start"
+            >
+              <ToggleGroupItem value="BUY" aria-label="Buy position">
+                <ArrowUpCircle className="mr-1 h-4 w-4 text-green-500" />
+                Buy
+              </ToggleGroupItem>
+              <ToggleGroupItem value="SELL" aria-label="Sell position">
+                <ArrowDownCircle className="mr-1 h-4 w-4 text-red-500" />
+                Sell
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
 
           <div className="space-y-2">
