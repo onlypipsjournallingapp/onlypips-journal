@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Auth from './Auth';
 import Dashboard from './Dashboard';
 import Trades from './Trades';
+import ChecklistPage from '@/components/Checklist/ChecklistPage';
 import MainLayout from '@/components/Layout/MainLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
@@ -63,6 +64,7 @@ const Index = () => {
       <Routes>
         <Route path="/" element={<Dashboard userId={user.id} />} />
         <Route path="/trades" element={<Trades userId={user.id} />} />
+        <Route path="/checklist" element={<ChecklistPage userId={user.id} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </MainLayout>
