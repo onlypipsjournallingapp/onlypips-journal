@@ -1,10 +1,9 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Bell, BellDot } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import NotificationsDropdown from "./NotificationsDropdown";
-import { Badge } from "@/components/ui/badge";
 
 interface NotificationBellProps {
   userId: string;
@@ -15,28 +14,22 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ userId }) => {
   const bellRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch user notifications
+  // Fetch all notifications without user filtering
   const { data, isLoading } = useQuery({
-    queryKey: ["notifications", userId],
+    queryKey: ["notifications"],
     queryFn: async () => {
-      // 1. Get all notifications, left join user_notifications to check for read
       const { data: notifications, error } = await supabase
         .from("notifications")
-        .select("*, user_notifications: user_notifications!inner(read, read_at)")
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-
-      return notifications?.map((n: any) => ({
-        ...n,
-        read: n.user_notifications?.[0]?.read ?? false,
-        read_at: n.user_notifications?.[0]?.read_at ?? null,
-      })) ?? [];
+      return notifications ?? [];
     },
     refetchInterval: 10_000, // Slight polling for demo
   });
 
-  const unreadCount = isLoading || !data ? 0 : data.filter((n) => !n.read).length;
+  const unreadCount = isLoading || !data ? 0 : data.length;
   const hasUnread = unreadCount > 0;
 
   // Close dropdown on outside click

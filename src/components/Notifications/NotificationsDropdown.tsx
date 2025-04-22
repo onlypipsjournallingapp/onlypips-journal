@@ -1,15 +1,12 @@
 
 import React from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 interface Notification {
   id: string;
   title: string;
   description?: string;
   created_at: string;
-  // We'll ignore 'read' and 'read_at' props as per the new logic.
 }
 
 interface NotificationsDropdownProps {
@@ -25,7 +22,6 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
     <div className="bg-popover border border-muted rounded shadow-lg p-4 animate-fade-in">
       <div className="flex justify-between items-center mb-3">
         <div className="font-semibold text-base">Notifications</div>
-        {/* Remove the "Mark all read" button as we don't have per-user read */}
       </div>
       {notifications.length === 0 ? (
         <div className="text-sm text-muted-foreground py-8 text-center">
