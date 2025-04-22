@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import TradeForm from '@/components/Trades/TradeForm';
 import TradeList from '@/components/Trades/TradeList';
@@ -13,42 +14,35 @@ interface TradesProps {
 
 // Define trade type based on the database schema
 type Trade = Database['public']['Tables']['trades']['Row'];
+type Account = Database['public']['Tables']['accounts']['Row'];
 
 const Trades: React.FC<TradesProps> = ({ userId }) => {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTrades = async () => {
-      try {
-        setIsLoading(true);
-        
-        const { data, error } = await supabase
-          .from('trades')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        setTrades(data || []);
-      } catch (error) {
-        console.error('Error fetching trades:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch trades. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
+    const fetchAccountsAndTrades = async () => {
+      setIsLoading(true);
+      const [{ data: accs, error: accErr }, { data, error }] = await Promise.all([
+        supabase.from("accounts").select("*").eq("user_id", userId).order("created_at"),
+        supabase.from('trades').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+      ]);
+      setAccounts(accs || []);
+      setSelectedAccountId((accs && accs.length > 0) ? accs[0].id : null);
+      setTrades(data || []);
+      setIsLoading(false);
+      if (accErr) console.error(accErr);
+      if (error) console.error(error);
     };
-    
-    fetchTrades();
-  }, [userId, toast]);
-  
+    fetchAccountsAndTrades();
+  }, [userId]);
+
   const handleSubmitTrade = async (tradeData: any) => {
     try {
+      if (!selectedAccountId) throw new Error("Please select an account first.");
       const newTradeData = {
         user_id: userId,
         pair: tradeData.pair,
@@ -60,62 +54,48 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
                 parseFloat(tradeData.profit_loss) > 0 ? 'WIN' : 'LOSS',
         is_break_even: tradeData.is_break_even || false,
         notes: tradeData.notes || null,
-        trade_type: tradeData.trade_type
+        trade_type: tradeData.trade_type,
+        account_id: selectedAccountId
       };
-      
       // Insert new trade into Supabase
       const { data, error } = await supabase
         .from('trades')
         .insert(newTradeData)
         .select()
         .single();
-      
       if (error) throw error;
-      
       // If there's a screenshot, upload it
       let screenshotUrl = null;
       if (tradeData.screenshot && data) {
         const fileExt = tradeData.screenshot.name.split('.').pop();
         const fileName = `${userId}/${data.id}.${fileExt}`;
-        
-        const { error: uploadError, data: uploadData } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('trades')
           .upload(fileName, tradeData.screenshot);
-        
         if (uploadError) throw uploadError;
-        
         // Get the public URL for the uploaded file
         const { data: { publicUrl } } = supabase.storage
           .from('trades')
           .getPublicUrl(fileName);
-          
         screenshotUrl = publicUrl;
-        
         // Update the trade with screenshot URL
         if (screenshotUrl) {
           const { error: updateError } = await supabase
             .from('trades')
             .update({ screenshot_url: screenshotUrl })
             .eq('id', data.id);
-          
           if (updateError) throw updateError;
         }
       }
-      
-      // Get the final trade with screenshot URL if applicable
       const finalTrade = {
         ...data,
         screenshot_url: screenshotUrl
       } as Trade;
-      
-      // Update local state
       setTrades([finalTrade, ...trades]);
-      
       toast({
         title: "Trade Added",
         description: "Your trade has been successfully recorded.",
       });
-      
       return finalTrade;
     } catch (error) {
       console.error('Error submitting trade:', error);
@@ -133,10 +113,23 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Trades</h1>
         <p className="text-muted-foreground">
-          Log and review your trading activity.
+          Log and review your trading activity. Choose an account to view/add trades.
         </p>
+        <div className="mb-4 mt-4">
+          <label className="font-medium mr-1">Select Account:</label>
+          <select
+            className="border px-3 py-1 rounded bg-background"
+            value={selectedAccountId || ''}
+            onChange={(e) => setSelectedAccountId(e.target.value)}
+          >
+            {accounts.map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.name} ({acc.type})
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
-      
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="list">Trade Log</TabsTrigger>
@@ -151,7 +144,9 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
               <div className="animate-pulse text-primary">Loading...</div>
             </div>
           ) : (
-            <TradeList trades={trades} />
+            <TradeList
+              trades={trades.filter(tr => tr.account_id === selectedAccountId)}
+            />
           )}
         </TabsContent>
         <TabsContent value="add">
@@ -161,5 +156,4 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
     </div>
   );
 };
-
 export default Trades;

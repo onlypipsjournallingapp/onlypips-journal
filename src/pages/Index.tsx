@@ -9,6 +9,7 @@ import MainLayout from '@/components/Layout/MainLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 import AdminNotifications from './AdminNotifications';
+import AccountsPage from "./Accounts";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -63,11 +64,18 @@ const Index = () => {
   return (
     <MainLayout onLogout={handleLogout} userId={user.id}>
       <Routes>
-        <Route path="/" element={<Dashboard userId={user.id} />} />
+        {/* "Accounts" summary page */}
+        <Route path="/accounts" element={<AccountsPage userId={user.id} />} />
+        {/* Dynamic dashboards */}
+        <Route path="/dashboard/:accountType/:accountName" element={
+          <Dashboard userId={user.id} />
+        } />
         <Route path="/trades" element={<Trades userId={user.id} />} />
         <Route path="/checklist" element={<ChecklistPage userId={user.id} />} />
         <Route path="/admin" element={<AdminNotifications />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Legacy root fallback: redirect to accounts summary */}
+        <Route path="/" element={<Navigate to="/accounts" replace />} />
+        <Route path="*" element={<Navigate to="/accounts" replace />} />
       </Routes>
     </MainLayout>
   );
