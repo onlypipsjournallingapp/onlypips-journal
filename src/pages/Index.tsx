@@ -8,6 +8,7 @@ import ChecklistPage from '@/components/Checklist/ChecklistPage';
 import MainLayout from '@/components/Layout/MainLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
+import AdminNotifications from './AdminNotifications';
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
