@@ -44,7 +44,9 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
+      queryClient.invalidateQueries({
+        queryKey: ["notifications", userId]
+      });
     },
   });
 
