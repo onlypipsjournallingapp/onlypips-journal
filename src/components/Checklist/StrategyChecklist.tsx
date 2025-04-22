@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Check, Pencil, Note, FileText } from "lucide-react";
+import { Check, Pencil, FileText, FileIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChecklistItem {
@@ -133,7 +133,7 @@ const StrategyChecklist: React.FC<StrategyChecklistProps> = ({ strategyId }) => 
             disabled={loading}
           />
           <Button type="submit" disabled={!newItem.trim() || loading}>
-            <Note className="h-4 w-4 mr-1" />
+            <FileIcon className="h-4 w-4 mr-1" />
             Add
           </Button>
         </form>
