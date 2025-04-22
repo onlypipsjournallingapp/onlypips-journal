@@ -60,11 +60,12 @@ const Index = () => {
   }
 
   return (
-    <MainLayout onLogout={handleLogout}>
+    <MainLayout onLogout={handleLogout} userId={user.id}>
       <Routes>
         <Route path="/" element={<Dashboard userId={user.id} />} />
         <Route path="/trades" element={<Trades userId={user.id} />} />
         <Route path="/checklist" element={<ChecklistPage userId={user.id} />} />
+        <Route path="/admin" element={<AdminNotifications />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </MainLayout>

@@ -3,12 +3,14 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, BarChart3, BookOpen, LogOut, ListChecks } from 'lucide-react';
+import NotificationBell from '@/components/Notifications/NotificationBell';
 
 interface NavBarProps {
   onLogout: () => void;
+  userId?: string;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ onLogout }) => {
+const NavBar: React.FC<NavBarProps> = ({ onLogout, userId }) => {
   const location = useLocation();
   return (
     <header className="border-b border-white/10 backdrop-blur-sm sticky top-0 z-10">
@@ -50,6 +52,7 @@ const NavBar: React.FC<NavBarProps> = ({ onLogout }) => {
         </nav>
         
         <div className="ml-auto flex items-center space-x-4">
+          {userId && <NotificationBell userId={userId} />}
           <Button 
             variant="ghost" 
             size="sm" 
