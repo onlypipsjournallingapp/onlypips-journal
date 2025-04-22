@@ -4,14 +4,17 @@ import { Info } from "lucide-react";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const ChecklistInfo: React.FC = () => (
-  <TooltipProvider>
+  <TooltipProvider delayDuration={300}>
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="inline-flex items-center cursor-pointer ml-2">
           <Info className="h-4 w-4 text-primary" />
         </span>
       </TooltipTrigger>
-      <TooltipContent side="top">
+      <TooltipContent 
+        side="top" 
+        className="bg-popover text-popover-foreground border p-2 rounded shadow-lg"
+      >
         <div className="max-w-xs text-sm">
           <strong>Trade Checklist:</strong>
           <ul className="list-disc ml-4 mt-2">
