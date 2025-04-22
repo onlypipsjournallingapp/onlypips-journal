@@ -79,7 +79,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ userId }) => {
         <div ref={dropdownRef} className="absolute right-0 mt-2 w-80 z-50">
           <NotificationsDropdown
             notifications={data ?? []}
-            userId={userId}
             onClose={() => setOpen(false)}
           />
         </div>
