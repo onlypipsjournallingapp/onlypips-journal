@@ -2,62 +2,105 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, BarChart3, BookOpen, LogOut, ListChecks } from 'lucide-react';
+import { TrendingUp, BarChart3, BookOpen, LogOut, ListChecks, Menu } from 'lucide-react';
 import NotificationBell from '@/components/Notifications/NotificationBell';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 interface NavBarProps {
   onLogout: () => void;
   userId?: string;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ onLogout, userId }) => {
+interface NavLinkProps {
+  to: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  className?: string;
+}
+
+const NavLink = ({ to, icon: Icon, children, className }: NavLinkProps) => {
   const location = useLocation();
+  const isActive = location.pathname === to || location.pathname.startsWith(to + '/');
+  
+  return (
+    <Link
+      to={to}
+      className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-2 ${
+        isActive ? "text-primary" : ""
+      } ${className}`}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{children}</span>
+    </Link>
+  );
+};
+
+const NavBar: React.FC<NavBarProps> = ({ onLogout, userId }) => {
   return (
     <header className="border-b border-white/10 backdrop-blur-sm sticky top-0 z-10">
-      <div className="container flex h-14 max-w-screen-2xl items-center">
-        <Link to="/" className="flex items-center font-bold text-lg mr-8">
-          <TrendingUp className="mr-2 h-5 w-5 text-primary" />
-          <span className="hidden md:inline">OnlyPips Journal</span>
-          <span className="md:hidden">OnlyPips</span>
-        </Link>
-        
-        <nav className="flex items-center space-x-4 lg:space-x-6 mx-6">
-          <Link
-            to="/"
-            className={`text-sm font-medium transition-colors hover:text-primary flex items-center ${
-              location.pathname === "/" ? "text-primary" : ""
-            }`}
-          >
-            <BarChart3 className="mr-1 h-4 w-4" />
-            <span>Dashboard</span>
+      <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
+        <div className="flex items-center">
+          <Link to="/" className="flex items-center font-bold text-lg mr-8">
+            <TrendingUp className="mr-2 h-5 w-5 text-primary" />
+            <span className="hidden md:inline">OnlyPips Journal</span>
+            <span className="md:hidden">OnlyPips</span>
           </Link>
-          <Link
-            to="/trades"
-            className={`text-sm font-medium transition-colors hover:text-primary flex items-center ${
-              location.pathname.startsWith("/trades") ? "text-primary" : ""
-            }`}
-          >
-            <BookOpen className="mr-1 h-4 w-4" />
-            <span>Trades</span>
-          </Link>
-          <Link
-            to="/checklist"
-            className={`text-sm font-medium transition-colors hover:text-primary flex items-center ${
-              location.pathname.startsWith("/checklist") ? "text-primary" : ""
-            }`}
-          >
-            <ListChecks className="mr-1 h-4 w-4" />
-            <span>Checklist</span>
-          </Link>
-        </nav>
-        
-        <div className="ml-auto flex items-center space-x-4">
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
+            <NavLink to="/" icon={BarChart3}>Dashboard</NavLink>
+            <NavLink to="/trades" icon={BookOpen}>Trades</NavLink>
+            <NavLink to="/checklist" icon={ListChecks}>Checklist</NavLink>
+          </nav>
+        </div>
+
+        {/* Right side items */}
+        <div className="flex items-center space-x-4">
+          {/* Mobile menu trigger */}
+          <Drawer>
+            <DrawerTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle>Menu</DrawerTitle>
+              </DrawerHeader>
+              <nav className="flex flex-col gap-4 p-4">
+                <NavLink to="/" icon={BarChart3} className="p-2">Dashboard</NavLink>
+                <NavLink to="/trades" icon={BookOpen} className="p-2">Trades</NavLink>
+                <NavLink to="/checklist" icon={ListChecks} className="p-2">Checklist</NavLink>
+                <DrawerClose asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={onLogout}
+                    className="w-full justify-start p-2"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </Button>
+                </DrawerClose>
+              </nav>
+            </DrawerContent>
+          </Drawer>
+
+          {/* Notification bell and logout for desktop */}
           {userId && <NotificationBell userId={userId} />}
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={onLogout}
-            className="flex items-center"
+            className="hidden md:flex items-center"
           >
             <LogOut className="mr-1.5 h-4 w-4" />
             <span>Logout</span>
