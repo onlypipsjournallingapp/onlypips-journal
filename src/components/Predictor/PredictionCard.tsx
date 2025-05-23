@@ -3,12 +3,13 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, CheckCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, CheckCircle, Calendar } from 'lucide-react';
 
 interface EventWithCounts {
   id: string;
   name: string;
   description: string | null;
+  event_date: string | null;
   usd_strong_count: number;
   usd_weak_count: number;
   user_prediction?: 'USD_STRONG' | 'USD_WEAK';
@@ -26,14 +27,39 @@ const PredictionCard: React.FC<PredictionCardProps> = ({ event, onPredict }) => 
 
   const hasUserPrediction = !!event.user_prediction;
 
+  // Format the event date
+  const formatEventDate = (dateString: string | null) => {
+    if (!dateString) return null;
+    
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    };
+    
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  const formattedDate = formatEventDate(event.event_date);
+
   return (
     <Card className="w-full">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex-1">
             <CardTitle className="text-xl">{event.name}</CardTitle>
+            {formattedDate && (
+              <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>{formattedDate}</span>
+              </div>
+            )}
             {event.description && (
-              <CardDescription className="mt-1">{event.description}</CardDescription>
+              <CardDescription className="mt-2">{event.description}</CardDescription>
             )}
           </div>
           {hasUserPrediction && (

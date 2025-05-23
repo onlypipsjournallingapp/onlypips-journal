@@ -41,7 +41,7 @@ const Predictor: React.FC<PredictorProps> = ({ userId }) => {
         .from('economic_events')
         .select('*')
         .eq('is_active', true)
-        .order('name');
+        .order('event_date', { ascending: true });
 
       if (eventsError) throw eventsError;
 
