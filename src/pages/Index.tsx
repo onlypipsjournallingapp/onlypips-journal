@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Auth from './Auth';
 import Dashboard from './Dashboard';
 import Trades from './Trades';
+import Predictor from './Predictor';
 import ChecklistPage from '@/components/Checklist/ChecklistPage';
 import MainLayout from '@/components/Layout/MainLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -71,6 +72,7 @@ const Index = () => {
           <Dashboard userId={user.id} />
         } />
         <Route path="/trades" element={<Trades userId={user.id} />} />
+        <Route path="/predictor" element={<Predictor userId={user.id} />} />
         <Route path="/checklist" element={<ChecklistPage userId={user.id} />} />
         <Route path="/admin" element={<AdminNotifications />} />
         {/* Legacy root fallback: redirect to accounts summary */}

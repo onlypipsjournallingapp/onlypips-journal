@@ -63,6 +63,33 @@ export type Database = {
         }
         Relationships: []
       }
+      economic_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -83,6 +110,41 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      predictions: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          month_year: string
+          prediction_side: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          month_year?: string
+          prediction_side: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          month_year?: string
+          prediction_side?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "economic_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       strategies: {
         Row: {
@@ -248,7 +310,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_event_prediction_counts: {
+        Args: { event_uuid: string; target_month?: string }
+        Returns: {
+          usd_strong_count: number
+          usd_weak_count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

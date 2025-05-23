@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, BarChart3, BookOpen, LogOut, ListChecks, Menu } from 'lucide-react';
+import { TrendingUp, BarChart3, BookOpen, LogOut, ListChecks, Menu, Target } from 'lucide-react';
 import NotificationBell from '@/components/Notifications/NotificationBell';
 import {
   Drawer,
@@ -55,8 +55,9 @@ const NavBar: React.FC<NavBarProps> = ({ onLogout, userId }) => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
-            <NavLink to="/" icon={BarChart3}>Dashboard</NavLink>
+            <NavLink to="/accounts" icon={BarChart3}>Dashboard</NavLink>
             <NavLink to="/trades" icon={BookOpen}>Trades</NavLink>
+            <NavLink to="/predictor" icon={Target}>Predictor</NavLink>
             <NavLink to="/checklist" icon={ListChecks}>Checklist</NavLink>
           </nav>
         </div>
@@ -76,8 +77,9 @@ const NavBar: React.FC<NavBarProps> = ({ onLogout, userId }) => {
                 <DrawerTitle>Menu</DrawerTitle>
               </DrawerHeader>
               <nav className="flex flex-col gap-4 p-4">
-                <NavLink to="/" icon={BarChart3} className="p-2">Dashboard</NavLink>
+                <NavLink to="/accounts" icon={BarChart3} className="p-2">Dashboard</NavLink>
                 <NavLink to="/trades" icon={BookOpen} className="p-2">Trades</NavLink>
+                <NavLink to="/predictor" icon={Target} className="p-2">Predictor</NavLink>
                 <NavLink to="/checklist" icon={ListChecks} className="p-2">Checklist</NavLink>
                 <DrawerClose asChild>
                   <Button 
