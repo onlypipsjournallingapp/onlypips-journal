@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 interface PaymentSubmission {
   id: string;
+  user_id: string;
   user_email: string;
   marketplace_checklist_id: string;
   proof_file_url: string;
