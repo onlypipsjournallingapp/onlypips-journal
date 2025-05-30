@@ -93,6 +93,48 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_checklists: {
+        Row: {
+          created_at: string | null
+          description: string
+          full_items: Json
+          id: string
+          is_active: boolean | null
+          is_free: boolean
+          preview_items: Json | null
+          price: number
+          screenshot_url: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          full_items: Json
+          id?: string
+          is_active?: boolean | null
+          is_free?: boolean
+          preview_items?: Json | null
+          price?: number
+          screenshot_url?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          full_items?: Json
+          id?: string
+          is_active?: boolean | null
+          is_free?: boolean
+          preview_items?: Json | null
+          price?: number
+          screenshot_url?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -304,6 +346,44 @@ export type Database = {
             columns: ["notification_id"]
             isOneToOne: false
             referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_purchases: {
+        Row: {
+          amount_paid: number
+          id: string
+          marketplace_checklist_id: string
+          paypal_transaction_id: string | null
+          purchase_date: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid: number
+          id?: string
+          marketplace_checklist_id: string
+          paypal_transaction_id?: string | null
+          purchase_date?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          id?: string
+          marketplace_checklist_id?: string
+          paypal_transaction_id?: string | null
+          purchase_date?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_purchases_marketplace_checklist_id_fkey"
+            columns: ["marketplace_checklist_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_checklists"
             referencedColumns: ["id"]
           },
         ]
