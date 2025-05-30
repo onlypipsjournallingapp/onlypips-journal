@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ShoppingCart, Eye, Check, ExternalLink } from "lucide-react";
+import { ShoppingCart, Eye, Check, ExternalLink, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface MarketplaceChecklist {
   id: string;
@@ -21,6 +23,15 @@ interface MarketplaceChecklist {
 
 interface UserPurchase {
   marketplace_checklist_id: string;
+  approval_status: string | null;
+}
+
+interface BankDetails {
+  id: string;
+  cardholder_name: string;
+  bank_name: string;
+  account_number: string;
+  branch_code: string;
 }
 
 interface MarketplaceDialogProps {
@@ -31,14 +42,27 @@ interface MarketplaceDialogProps {
 const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onChecklistPurchased }) => {
   const [checklists, setChecklists] = useState<MarketplaceChecklist[]>([]);
   const [purchases, setPurchases] = useState<UserPurchase[]>([]);
+  const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedChecklist, setSelectedChecklist] = useState<MarketplaceChecklist | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
     fetchMarketplaceData();
+    fetchUserEmail();
   }, [userId]);
+
+  const fetchUserEmail = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email) {
+      setUserEmail(user.email);
+    }
+  };
 
   const fetchMarketplaceData = async () => {
     setLoading(true);
@@ -55,13 +79,38 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
       // Fetch user purchases
       const { data: purchasesData, error: purchasesError } = await supabase
         .from("user_purchases")
-        .select("marketplace_checklist_id")
+        .select("marketplace_checklist_id, approval_status")
         .eq("user_id", userId);
 
       if (purchasesError) throw purchasesError;
 
-      setChecklists(checklistsData || []);
+      // Fetch bank details
+      const { data: bankData, error: bankError } = await supabase
+        .from("bank_details")
+        .select("*")
+        .eq("is_active", true)
+        .single();
+
+      if (bankError && bankError.code !== 'PGRST116') throw bankError;
+
+      // Parse JSON fields safely
+      const parsedChecklists = (checklistsData || []).map(checklist => ({
+        ...checklist,
+        preview_items: Array.isArray(checklist.preview_items) 
+          ? checklist.preview_items 
+          : typeof checklist.preview_items === 'string' 
+            ? JSON.parse(checklist.preview_items) 
+            : [],
+        full_items: Array.isArray(checklist.full_items) 
+          ? checklist.full_items 
+          : typeof checklist.full_items === 'string' 
+            ? JSON.parse(checklist.full_items) 
+            : []
+      }));
+
+      setChecklists(parsedChecklists);
       setPurchases(purchasesData || []);
+      setBankDetails(bankData);
     } catch (error) {
       console.error("Error fetching marketplace data:", error);
       toast({
@@ -75,7 +124,13 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
   };
 
   const isPurchased = (checklistId: string) => {
-    return purchases.some(p => p.marketplace_checklist_id === checklistId);
+    const purchase = purchases.find(p => p.marketplace_checklist_id === checklistId);
+    return purchase && purchase.approval_status === 'approved';
+  };
+
+  const hasPendingPayment = (checklistId: string) => {
+    const purchase = purchases.find(p => p.marketplace_checklist_id === checklistId);
+    return purchase && purchase.approval_status === 'pending';
   };
 
   const handleFreeChecklistAdd = async (checklist: MarketplaceChecklist) => {
@@ -122,33 +177,102 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
     }
   };
 
-  const handlePayPalPayment = async (checklist: MarketplaceChecklist) => {
+  const handlePurchaseClick = (checklist: MarketplaceChecklist) => {
+    setSelectedChecklist(checklist);
+    setPaymentDialogOpen(true);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a JPG, PNG, or PDF file.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please upload a file smaller than 10MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setUploadFile(file);
+    }
+  };
+
+  const handleSubmitProof = async () => {
+    if (!uploadFile || !selectedChecklist) return;
+
+    setUploading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-paypal-payment', {
-        body: {
-          checklistId: checklist.id,
-          title: checklist.title,
-          price: checklist.price,
-          userId: userId
-        }
-      });
+      // Upload file to storage
+      const fileExt = uploadFile.name.split('.').pop();
+      const fileName = `${userId}/${selectedChecklist.id}_${Date.now()}.${fileExt}`;
 
-      if (error) throw error;
+      const { error: uploadError } = await supabase.storage
+        .from('payment-proofs')
+        .upload(fileName, uploadFile);
 
-      // Open PayPal payment in new tab
-      window.open(data.url, '_blank');
+      if (uploadError) throw uploadError;
+
+      // Get the file URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment-proofs')
+        .getPublicUrl(fileName);
+
+      // Create payment submission record
+      const { error: submissionError } = await supabase
+        .from('payment_submissions')
+        .insert({
+          user_id: userId,
+          user_email: userEmail,
+          marketplace_checklist_id: selectedChecklist.id,
+          proof_file_url: publicUrl,
+          status: 'pending'
+        });
+
+      if (submissionError) throw submissionError;
+
+      // Create user purchase record
+      const { error: purchaseError } = await supabase
+        .from('user_purchases')
+        .insert({
+          user_id: userId,
+          marketplace_checklist_id: selectedChecklist.id,
+          amount_paid: selectedChecklist.price,
+          status: 'pending',
+          approval_status: 'pending'
+        });
+
+      if (purchaseError) throw purchaseError;
 
       toast({
-        title: "Payment Initiated",
-        description: "You'll be redirected to PayPal to complete the payment."
+        title: "Proof of payment submitted!",
+        description: "Your payment proof has been submitted for review. You'll be notified once approved.",
       });
+
+      setPaymentDialogOpen(false);
+      setUploadFile(null);
+      fetchMarketplaceData(); // Refresh to show pending status
     } catch (error) {
-      console.error("Error creating PayPal payment:", error);
+      console.error("Error submitting proof:", error);
       toast({
-        title: "Payment Error",
-        description: "Failed to initiate payment. Please try again.",
+        title: "Submission failed",
+        description: "Failed to submit proof of payment. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -177,6 +301,7 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
             <div className="grid gap-4">
               {checklists.map((checklist) => {
                 const purchased = isPurchased(checklist.id);
+                const pending = hasPendingPayment(checklist.id);
                 
                 return (
                   <Card key={checklist.id} className="w-full">
@@ -190,12 +315,17 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
                           {checklist.is_free ? (
                             <Badge variant="secondary">Free</Badge>
                           ) : (
-                            <Badge variant="default">${checklist.price}</Badge>
+                            <Badge variant="default">R{checklist.price}</Badge>
                           )}
                           {purchased && (
                             <Badge variant="outline" className="gap-1">
                               <Check className="h-3 w-3" />
                               Owned
+                            </Badge>
+                          )}
+                          {pending && (
+                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                              Pending Approval
                             </Badge>
                           )}
                         </div>
@@ -223,6 +353,14 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
                             <ExternalLink className="h-4 w-4" />
                             Add to My Strategies
                           </Button>
+                        ) : pending ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                          >
+                            Awaiting Approval
+                          </Button>
                         ) : checklist.is_free ? (
                           <Button
                             size="sm"
@@ -233,11 +371,11 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
                         ) : (
                           <Button
                             size="sm"
-                            onClick={() => handlePayPalPayment(checklist)}
+                            onClick={() => handlePurchaseClick(checklist)}
                             className="gap-1"
                           >
                             <ShoppingCart className="h-4 w-4" />
-                            Buy for ${checklist.price}
+                            Purchase for R{checklist.price}
                           </Button>
                         )}
                       </div>
@@ -282,6 +420,90 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
                     Purchase to unlock the complete {selectedChecklist.full_items.length}-item checklist.
                   </p>
                 )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bank Transfer Payment Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Bank Transfer Payment - {selectedChecklist?.title}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedChecklist && bankDetails && (
+            <div className="space-y-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-semibold mb-3">Step 1: Transfer Details</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <strong>Amount:</strong> R{selectedChecklist.price}
+                  </div>
+                  <div>
+                    <strong>Cardholder Name:</strong> {bankDetails.cardholder_name}
+                  </div>
+                  <div>
+                    <strong>Bank Name:</strong> {bankDetails.bank_name}
+                  </div>
+                  <div>
+                    <strong>Account Number:</strong> {bankDetails.account_number}
+                  </div>
+                  <div>
+                    <strong>Branch Code:</strong> {bankDetails.branch_code}
+                  </div>
+                  <div>
+                    <strong>Reference:</strong> {userEmail}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <h4 className="font-semibold mb-2">Important Instructions:</h4>
+                <ul className="text-sm space-y-1">
+                  <li>• Use your email address ({userEmail}) as the payment reference</li>
+                  <li>• Transfer exactly R{selectedChecklist.price}</li>
+                  <li>• Upload proof of payment below</li>
+                  <li>• Allow 1-2 business days for approval</li>
+                </ul>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-semibold">Step 2: Submit Proof of Payment</h4>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="proof-upload">Upload proof of payment (JPG, PNG, or PDF)</Label>
+                  <Input
+                    id="proof-upload"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={handleFileUpload}
+                  />
+                  {uploadFile && (
+                    <p className="text-sm text-green-600">
+                      File selected: {uploadFile.name}
+                    </p>
+                  )}
+                </div>
+
+                <Button
+                  onClick={handleSubmitProof}
+                  disabled={!uploadFile || uploading}
+                  className="w-full"
+                >
+                  {uploading ? (
+                    <>
+                      <Upload className="h-4 w-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Submit Proof of Payment
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           )}

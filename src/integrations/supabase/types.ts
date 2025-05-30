@@ -36,6 +36,39 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_details: {
+        Row: {
+          account_number: string
+          bank_name: string
+          branch_code: string
+          cardholder_name: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_number: string
+          bank_name: string
+          branch_code: string
+          cardholder_name: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_number?: string
+          bank_name?: string
+          branch_code?: string
+          cardholder_name?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       currency_pairs: {
         Row: {
           active: boolean
@@ -155,6 +188,53 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      payment_submissions: {
+        Row: {
+          id: string
+          marketplace_checklist_id: string
+          notes: string | null
+          proof_file_url: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string | null
+          user_email: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          marketplace_checklist_id: string
+          notes?: string | null
+          proof_file_url: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          user_email: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          marketplace_checklist_id?: string
+          notes?: string | null
+          proof_file_url?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          user_email?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_submissions_marketplace_checklist_id_fkey"
+            columns: ["marketplace_checklist_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       predictions: {
         Row: {
@@ -353,27 +433,30 @@ export type Database = {
       user_purchases: {
         Row: {
           amount_paid: number
+          approval_status: string | null
           id: string
           marketplace_checklist_id: string
-          paypal_transaction_id: string | null
+          payment_submission_id: string | null
           purchase_date: string | null
           status: string
           user_id: string
         }
         Insert: {
           amount_paid: number
+          approval_status?: string | null
           id?: string
           marketplace_checklist_id: string
-          paypal_transaction_id?: string | null
+          payment_submission_id?: string | null
           purchase_date?: string | null
           status?: string
           user_id: string
         }
         Update: {
           amount_paid?: number
+          approval_status?: string | null
           id?: string
           marketplace_checklist_id?: string
-          paypal_transaction_id?: string | null
+          payment_submission_id?: string | null
           purchase_date?: string | null
           status?: string
           user_id?: string
@@ -384,6 +467,13 @@ export type Database = {
             columns: ["marketplace_checklist_id"]
             isOneToOne: false
             referencedRelation: "marketplace_checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_purchases_payment_submission_id_fkey"
+            columns: ["payment_submission_id"]
+            isOneToOne: false
+            referencedRelation: "payment_submissions"
             referencedColumns: ["id"]
           },
         ]

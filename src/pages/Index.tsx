@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Auth from './Auth';
@@ -11,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 import AdminNotifications from './AdminNotifications';
 import AccountsPage from "./Accounts";
+import PaymentApprovalPage from '@/components/Admin/PaymentApprovalPage';
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -75,6 +75,11 @@ const Index = () => {
         <Route path="/predictor" element={<Predictor userId={user.id} />} />
         <Route path="/checklist" element={<ChecklistPage userId={user.id} />} />
         <Route path="/admin" element={<AdminNotifications />} />
+        <Route path="/admin/payments" element={
+          <div className="p-6">
+            <PaymentApprovalPage />
+          </div>
+        } />
         {/* Legacy root fallback: redirect to accounts summary */}
         <Route path="/" element={<Navigate to="/accounts" replace />} />
         <Route path="*" element={<Navigate to="/accounts" replace />} />

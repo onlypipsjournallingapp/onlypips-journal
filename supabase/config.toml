@@ -44,20 +44,6 @@ enable_signup = true
 email_double_confirm_changes = true
 enable_anonymous_sign_ins = false
 
-[auth.email]
-enable_signup = true
-double_confirm_changes = true
-enable_confirmations = false
-
-[functions.create-paypal-payment]
-verify_jwt = true
-
-[functions.paypal-success]
-verify_jwt = false
-
-[functions.paypal-cancel]
-verify_jwt = false
-
 [edge-runtime]
 policy = "per_worker"
 inspector_port = 8083
