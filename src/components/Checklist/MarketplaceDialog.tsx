@@ -26,6 +26,11 @@ interface UserPurchase {
   approval_status: string | null;
 }
 
+interface PaymentSubmission {
+  marketplace_checklist_id: string;
+  status: string;
+}
+
 interface BankDetails {
   id: string;
   cardholder_name: string;
@@ -42,6 +47,7 @@ interface MarketplaceDialogProps {
 const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onChecklistPurchased }) => {
   const [checklists, setChecklists] = useState<MarketplaceChecklist[]>([]);
   const [purchases, setPurchases] = useState<UserPurchase[]>([]);
+  const [paymentSubmissions, setPaymentSubmissions] = useState<PaymentSubmission[]>([]);
   const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedChecklist, setSelectedChecklist] = useState<MarketplaceChecklist | null>(null);
@@ -84,6 +90,14 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
 
       if (purchasesError) throw purchasesError;
 
+      // Fetch payment submissions to check pending status
+      const { data: submissionsData, error: submissionsError } = await supabase
+        .from("payment_submissions")
+        .select("marketplace_checklist_id, status")
+        .eq("user_id", userId);
+
+      if (submissionsError) throw submissionsError;
+
       // Fetch bank details
       const { data: bankData, error: bankError } = await supabase
         .from("bank_details")
@@ -110,6 +124,7 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
 
       setChecklists(parsedChecklists);
       setPurchases(purchasesData || []);
+      setPaymentSubmissions(submissionsData || []);
       setBankDetails(bankData);
     } catch (error) {
       console.error("Error fetching marketplace data:", error);
@@ -129,8 +144,12 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
   };
 
   const hasPendingPayment = (checklistId: string) => {
+    // Check both payment submissions and purchases for pending status
+    const submission = paymentSubmissions.find(s => s.marketplace_checklist_id === checklistId);
     const purchase = purchases.find(p => p.marketplace_checklist_id === checklistId);
-    return purchase && purchase.approval_status === 'pending';
+    
+    return (submission && submission.status === 'pending') || 
+           (purchase && purchase.approval_status === 'pending');
   };
 
   const handleFreeChecklistAdd = async (checklist: MarketplaceChecklist) => {
@@ -505,6 +524,12 @@ const MarketplaceDialog: React.FC<MarketplaceDialogProps> = ({ userId, onCheckli
                   )}
                 </Button>
               </div>
+            </div>
+          )}
+
+          {selectedChecklist && !bankDetails && (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Bank details are not available at the moment. Please try again later.</p>
             </div>
           )}
         </DialogContent>
