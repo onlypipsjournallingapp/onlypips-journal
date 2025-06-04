@@ -126,6 +126,95 @@ export type Database = {
         }
         Relationships: []
       }
+      growth_plan_trades: {
+        Row: {
+          actual_profit_loss: number
+          created_at: string
+          growth_plan_id: string
+          hit_target: boolean
+          id: string
+          notes: string | null
+          trade_date: string
+        }
+        Insert: {
+          actual_profit_loss: number
+          created_at?: string
+          growth_plan_id: string
+          hit_target: boolean
+          id?: string
+          notes?: string | null
+          trade_date?: string
+        }
+        Update: {
+          actual_profit_loss?: number
+          created_at?: string
+          growth_plan_id?: string
+          hit_target?: boolean
+          id?: string
+          notes?: string | null
+          trade_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_plan_trades_growth_plan_id_fkey"
+            columns: ["growth_plan_id"]
+            isOneToOne: false
+            referencedRelation: "growth_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_plans: {
+        Row: {
+          created_at: string
+          current_balance: number
+          estimated_trades: number
+          id: string
+          is_active: boolean
+          profit_per_trade: number
+          risk_level: string
+          risk_per_trade: number
+          risk_percentage: number
+          starting_balance: number
+          target_balance: number
+          trades_completed: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_balance: number
+          estimated_trades: number
+          id?: string
+          is_active?: boolean
+          profit_per_trade: number
+          risk_level: string
+          risk_per_trade: number
+          risk_percentage: number
+          starting_balance: number
+          target_balance: number
+          trades_completed?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_balance?: number
+          estimated_trades?: number
+          id?: string
+          is_active?: boolean
+          profit_per_trade?: number
+          risk_level?: string
+          risk_per_trade?: number
+          risk_percentage?: number
+          starting_balance?: number
+          target_balance?: number
+          trades_completed?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       marketplace_checklists: {
         Row: {
           created_at: string | null
@@ -329,6 +418,47 @@ export type Database = {
             columns: ["strategy_id"]
             isOneToOne: false
             referencedRelation: "strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strategy_instructions: {
+        Row: {
+          created_at: string | null
+          html_content: string | null
+          id: string
+          instruction_image_path: string | null
+          instruction_text: string | null
+          instruction_video_path: string | null
+          marketplace_checklist_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          html_content?: string | null
+          id?: string
+          instruction_image_path?: string | null
+          instruction_text?: string | null
+          instruction_video_path?: string | null
+          marketplace_checklist_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          html_content?: string | null
+          id?: string
+          instruction_image_path?: string | null
+          instruction_text?: string | null
+          instruction_video_path?: string | null
+          marketplace_checklist_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_instructions_marketplace_checklist_id_fkey"
+            columns: ["marketplace_checklist_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_checklists"
             referencedColumns: ["id"]
           },
         ]

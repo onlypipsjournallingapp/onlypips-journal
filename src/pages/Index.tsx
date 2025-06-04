@@ -4,6 +4,7 @@ import Auth from './Auth';
 import Dashboard from './Dashboard';
 import Trades from './Trades';
 import Predictor from './Predictor';
+import GrowthPath from './GrowthPath';
 import ChecklistPage from '@/components/Checklist/ChecklistPage';
 import MainLayout from '@/components/Layout/MainLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -73,6 +74,7 @@ const Index = () => {
         } />
         <Route path="/trades" element={<Trades userId={user.id} />} />
         <Route path="/predictor" element={<Predictor userId={user.id} />} />
+        <Route path="/growth-path" element={<GrowthPath userId={user.id} />} />
         <Route path="/checklist" element={<ChecklistPage userId={user.id} />} />
         <Route path="/admin" element={<AdminNotifications />} />
         <Route path="/admin/payments" element={
