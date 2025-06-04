@@ -13,10 +13,19 @@ import { supabase } from '@/integrations/supabase/client';
 const formSchema = z.object({
   startingBalance: z.number().min(1, 'Starting balance must be greater than 0'),
   targetBalance: z.number().min(1, 'Target balance must be greater than 0'),
-  riskLevel: z.enum(['Low', 'Medium', 'High']),
+  riskLevel: z.enum(['Low', 'Medium', 'High', 'Custom']),
+  customRiskPercentage: z.number().min(0.1, 'Risk percentage must be at least 0.1%').max(50, 'Risk percentage cannot exceed 50%').optional(),
 }).refine((data) => data.targetBalance > data.startingBalance, {
   message: "Target balance must be greater than starting balance",
   path: ["targetBalance"],
+}).refine((data) => {
+  if (data.riskLevel === 'Custom') {
+    return data.customRiskPercentage !== undefined;
+  }
+  return true;
+}, {
+  message: "Custom risk percentage is required when Custom risk level is selected",
+  path: ["customRiskPercentage"],
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -44,14 +53,16 @@ const GrowthPlanForm: React.FC<GrowthPlanFormProps> = ({ userId, onPlanCreated }
   });
 
   const riskLevel = watch('riskLevel');
+  const customRiskPercentage = watch('customRiskPercentage');
   const startingBalance = watch('startingBalance');
   const targetBalance = watch('targetBalance');
 
-  const getRiskPercentage = (level: string) => {
+  const getRiskPercentage = (level: string, customPercentage?: number) => {
     switch (level) {
       case 'Low': return 2;
       case 'Medium': return 5;
       case 'High': return 10;
+      case 'Custom': return customPercentage || 5;
       default: return 5;
     }
   };
@@ -73,7 +84,7 @@ const GrowthPlanForm: React.FC<GrowthPlanFormProps> = ({ userId, onPlanCreated }
     setIsSubmitting(true);
     
     try {
-      const riskPercentage = getRiskPercentage(data.riskLevel);
+      const riskPercentage = getRiskPercentage(data.riskLevel, data.customRiskPercentage);
       const calculations = calculatePlan(data.startingBalance, data.targetBalance, riskPercentage);
 
       const planData = {
@@ -111,8 +122,9 @@ const GrowthPlanForm: React.FC<GrowthPlanFormProps> = ({ userId, onPlanCreated }
     }
   };
 
+  const currentRiskPercentage = getRiskPercentage(riskLevel, customRiskPercentage);
   const currentCalculations = startingBalance && targetBalance && riskLevel ? 
-    calculatePlan(startingBalance, targetBalance, getRiskPercentage(riskLevel)) : null;
+    calculatePlan(startingBalance, targetBalance, currentRiskPercentage) : null;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -146,23 +158,47 @@ const GrowthPlanForm: React.FC<GrowthPlanFormProps> = ({ userId, onPlanCreated }
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="riskLevel">Risk Level</Label>
-        <Select 
-          value={riskLevel} 
-          onValueChange={(value) => setValue('riskLevel', value as 'Low' | 'Medium' | 'High')}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Low">Low (2% risk per trade)</SelectItem>
-            <SelectItem value="Medium">Medium (5% risk per trade)</SelectItem>
-            <SelectItem value="High">High (10% risk per trade)</SelectItem>
-          </SelectContent>
-        </Select>
-        {errors.riskLevel && (
-          <p className="text-sm text-destructive">{errors.riskLevel.message}</p>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="riskLevel">Risk Level</Label>
+          <Select 
+            value={riskLevel} 
+            onValueChange={(value) => setValue('riskLevel', value as 'Low' | 'Medium' | 'High' | 'Custom')}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Low">Low (2% risk per trade)</SelectItem>
+              <SelectItem value="Medium">Medium (5% risk per trade)</SelectItem>
+              <SelectItem value="High">High (10% risk per trade)</SelectItem>
+              <SelectItem value="Custom">Custom (set your own %)</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.riskLevel && (
+            <p className="text-sm text-destructive">{errors.riskLevel.message}</p>
+          )}
+        </div>
+
+        {riskLevel === 'Custom' && (
+          <div className="space-y-2">
+            <Label htmlFor="customRiskPercentage">Custom Risk Percentage (%)</Label>
+            <Input
+              id="customRiskPercentage"
+              type="number"
+              step="0.1"
+              min="0.1"
+              max="50"
+              placeholder="7.5"
+              {...register('customRiskPercentage', { valueAsNumber: true })}
+            />
+            {errors.customRiskPercentage && (
+              <p className="text-sm text-destructive">{errors.customRiskPercentage.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Enter a value between 0.1% and 50%
+            </p>
+          </div>
         )}
       </div>
 
@@ -179,7 +215,7 @@ const GrowthPlanForm: React.FC<GrowthPlanFormProps> = ({ userId, onPlanCreated }
               <p className="font-medium">${currentCalculations.profitPerTrade.toFixed(2)}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Risk Per Trade</p>
+              <p className="text-muted-foreground">Risk Per Trade ({currentRiskPercentage}%)</p>
               <p className="font-medium">${currentCalculations.riskPerTrade.toFixed(2)}</p>
             </div>
           </div>
