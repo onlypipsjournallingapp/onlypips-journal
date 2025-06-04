@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ interface GrowthPlan {
   risk_per_trade: number;
   trades_completed: number;
   is_active: boolean;
+  created_at: string;
 }
 
 interface GrowthTrade {
