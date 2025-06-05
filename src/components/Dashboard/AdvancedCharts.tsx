@@ -40,20 +40,32 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ trades }) => {
 
   const monthlyPerformance = Object.values(monthlyData);
 
-  // Pair performance
+  // Fixed pair performance - ensure we have data and handle edge cases
   const pairData = trades.reduce((acc, trade) => {
+    // Make sure we have a valid pair
+    if (!trade.pair) return acc;
+    
     if (!acc[trade.pair]) {
       acc[trade.pair] = { pair: trade.pair, trades: 0, pnl: 0, wins: 0 };
     }
     acc[trade.pair].trades += 1;
-    acc[trade.pair].pnl += Number(trade.profit_loss);
+    acc[trade.pair].pnl += Number(trade.profit_loss || 0);
     if (trade.result === 'WIN') acc[trade.pair].wins += 1;
     return acc;
   }, {} as any);
 
   const pairPerformance = Object.values(pairData)
+    .filter((pair: any) => pair.trades > 0) // Only include pairs with trades
     .sort((a: any, b: any) => b.pnl - a.pnl)
     .slice(0, 8);
+
+  // Debug logging for pair performance
+  console.log('Pair Performance Debug:', {
+    tradesCount: trades.length,
+    pairDataKeys: Object.keys(pairData),
+    pairPerformance: pairPerformance,
+    sampleTrade: trades[0]
+  });
 
   // Risk distribution
   const riskData = [
@@ -72,38 +84,44 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ trades }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={cumulativePnL}>
-                <defs>
-                  <linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis dataKey="trade" stroke="#9CA3AF" fontSize={12} />
-                <YAxis stroke="#9CA3AF" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                  }}
-                  labelStyle={{ color: '#F3F4F6' }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="cumulative" 
-                  stroke="#8B5CF6" 
-                  strokeWidth={3}
-                  fill="url(#pnlGradient)"
-                  dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          {cumulativePnL.length > 0 ? (
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={cumulativePnL}>
+                  <defs>
+                    <linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                  <XAxis dataKey="trade" stroke="#9CA3AF" fontSize={12} />
+                  <YAxis stroke="#9CA3AF" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937', 
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                    }}
+                    labelStyle={{ color: '#F3F4F6' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="cumulative" 
+                    stroke="#8B5CF6" 
+                    strokeWidth={3}
+                    fill="url(#pnlGradient)"
+                    dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-80 flex items-center justify-center text-muted-foreground">
+              No trade data available for cumulative performance chart
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -115,24 +133,30 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ trades }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyPerformance}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
-                <YAxis stroke="#9CA3AF" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                  }}
-                />
-                <Bar dataKey="pnl" fill="#10B981" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {monthlyPerformance.length > 0 ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyPerformance}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                  <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
+                  <YAxis stroke="#9CA3AF" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937', 
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                    }}
+                  />
+                  <Bar dataKey="pnl" fill="#10B981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              No monthly data available
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -144,44 +168,50 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ trades }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={riskData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {riskData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex justify-center gap-4 mt-4">
-            {riskData.map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-sm text-muted-foreground">{item.name}</span>
+          {riskData.some(item => item.value > 0) ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={riskData.filter(item => item.value > 0)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {riskData.filter(item => item.value > 0).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937', 
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex justify-center gap-4 mt-4">
+                {riskData.filter(item => item.value > 0).map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-sm text-muted-foreground">{item.name} ({item.value})</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              No risk data available
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -193,24 +223,38 @@ const AdvancedCharts: React.FC<AdvancedChartsProps> = ({ trades }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={pairPerformance} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis type="number" stroke="#9CA3AF" fontSize={12} />
-                <YAxis dataKey="pair" type="category" stroke="#9CA3AF" fontSize={12} width={60} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                  }}
-                />
-                <Bar dataKey="pnl" fill="#06B6D4" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {pairPerformance.length > 0 ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={pairPerformance} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                  <XAxis type="number" stroke="#9CA3AF" fontSize={12} />
+                  <YAxis dataKey="pair" type="category" stroke="#9CA3AF" fontSize={12} width={60} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937', 
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                    }}
+                    formatter={(value: any, name: string) => {
+                      if (name === 'pnl') return [`$${Number(value).toFixed(2)}`, 'P&L'];
+                      return [value, name];
+                    }}
+                    labelFormatter={(label) => `Pair: ${label}`}
+                  />
+                  <Bar dataKey="pnl" fill="#06B6D4" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <p className="text-lg mb-2">No currency pair data available</p>
+                <p className="text-sm">Trade data needs to include currency pair information</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
