@@ -44,7 +44,7 @@ const NavLink = ({ to, icon: Icon, children, className }: NavLinkProps) => {
 
 const NavBar: React.FC<NavBarProps> = ({ onLogout, userId }) => {
   return (
-    <header className="border-b border-white/10 backdrop-blur-sm sticky top-0 z-10">
+    <header className="border-b border-white/10 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
         <div className="flex items-center">
           <Link to="/" className="flex items-center font-bold text-lg mr-8">
@@ -73,7 +73,7 @@ const NavBar: React.FC<NavBarProps> = ({ onLogout, userId }) => {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </DrawerTrigger>
-            <DrawerContent>
+            <DrawerContent className="z-[60]">
               <DrawerHeader>
                 <DrawerTitle>Menu</DrawerTitle>
               </DrawerHeader>
