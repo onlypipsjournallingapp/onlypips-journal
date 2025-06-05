@@ -13,7 +13,6 @@ import { useParams, useNavigate } from "react-router-dom";
 
 interface DashboardProps {
   userId: string;
-  // For legacy route, we can fallback to default
   accountType?: "real" | "demo";
   accountName?: string;
 }
@@ -26,51 +25,87 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
   const [trades, setTrades] = useState<Trade[]>([]);
   const [account, setAccount] = useState<Account | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const navigate = useNavigate();
 
-  // Backward compatibility for legacy route
   const effectiveType = accountType || params.accountType;
   const effectiveName = accountName || params.accountName;
 
-  useEffect(() => {
-    // If no accountType/name provided, redirect to Accounts summary
+  const fetchAccountAndTrades = async () => {
     if (!effectiveType || !effectiveName) {
       navigate("/accounts");
       return;
     }
-    // decode account name for URL
+
+    setIsLoading(true);
     const safeAccountName = decodeURIComponent(effectiveName);
-    const fetchAccountAndTrades = async () => {
-      setIsLoading(true);
-      // 1. Fetch account by name+type+user
-      const { data: acc, error: accErr } = await supabase
-        .from("accounts")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("type", effectiveType.toUpperCase())
-        .eq("name", safeAccountName)
-        .maybeSingle();
-      if (accErr || !acc) {
-        setAccount(null);
-        setTrades([]);
-        setIsLoading(false);
-        return;
-      }
-      setAccount(acc);
+    
+    // Fetch account by name+type+user
+    const { data: acc, error: accErr } = await supabase
+      .from("accounts")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("type", effectiveType.toUpperCase())
+      .eq("name", safeAccountName)
+      .maybeSingle();
 
-      // 2. Fetch trades for this account
-      const { data: trs, error: trErr } = await supabase
-        .from("trades")
-        .select("*")
-        .eq("account_id", acc.id)
-        .order("created_at", { ascending: false });
-      setTrades(trs || []);
+    if (accErr || !acc) {
+      console.error("Account fetch error:", accErr);
+      setAccount(null);
+      setTrades([]);
       setIsLoading(false);
-      if (trErr) console.error(trErr);
-    };
+      return;
+    }
 
+    setAccount(acc);
+
+    // Fetch trades for this account with real-time updates
+    const { data: trs, error: trErr } = await supabase
+      .from("trades")
+      .select("*")
+      .eq("account_id", acc.id)
+      .order("created_at", { ascending: false });
+
+    if (trErr) {
+      console.error("Trades fetch error:", trErr);
+    } else {
+      setTrades(trs || []);
+      setLastUpdated(new Date());
+    }
+    
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
     fetchAccountAndTrades();
   }, [userId, effectiveType, effectiveName]);
+
+  // Set up real-time subscription for trades
+  useEffect(() => {
+    if (!account) return;
+
+    const channel = supabase
+      .channel('trades-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'trades',
+          filter: `account_id=eq.${account.id}`
+        },
+        (payload) => {
+          console.log('Real-time trade update:', payload);
+          // Refresh trades data when changes occur
+          fetchAccountAndTrades();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [account?.id]);
 
   if (!effectiveType || !effectiveName) return null;
 
@@ -97,8 +132,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
                 </h1>
                 <p className="text-muted-foreground">
                   {account
-                    ? `${account.type} Account - Advanced Analytics Dashboard`
+                    ? `${account.type} Account - Live Analytics Dashboard`
                     : "Account not found."}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Last updated: {lastUpdated.toLocaleTimeString()}
                 </p>
               </div>
             </div>
@@ -107,6 +145,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Total Trades</p>
             <p className="text-2xl font-bold">{trades.length}</p>
+            <div className="flex items-center gap-1 mt-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-green-500">Live Data</span>
+            </div>
           </div>
         </div>
 
@@ -114,13 +156,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
           <div className="flex justify-center items-center h-64">
             <div className="relative">
               <div className="h-24 w-24 rounded-full border-t-2 border-b-2 border-primary animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center text-primary">Loading</div>
+              <div className="absolute inset-0 flex items-center justify-center text-primary text-sm">Loading</div>
             </div>
           </div>
         ) : (
           account && (
             <div className="space-y-8">
-              {/* Advanced Metrics Grid */}
+              {/* Advanced Metrics Grid - Connected to live trade data */}
               <div className="animate-fade-in" style={{animationDelay: '100ms'}}>
                 <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                   Performance Overview
@@ -128,7 +170,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
                 <MetricsGrid trades={trades} />
               </div>
 
-              {/* Standard Stats */}
+              {/* Standard Stats - Connected to live trade data */}
               <div className="animate-fade-in" style={{animationDelay: '300ms'}}>
                 <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                   Trade Summary
@@ -136,7 +178,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
                 <TradeStats trades={trades} />
               </div>
 
-              {/* Advanced Charts */}
+              {/* Advanced Charts - Connected to live trade data */}
               {trades.length >= 5 && (
                 <div className="animate-fade-in" style={{animationDelay: '500ms'}}>
                   <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -146,7 +188,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
                 </div>
               )}
 
-              {/* Performance Metrics */}
+              {/* Performance Metrics - Connected to live trade data */}
               {trades.length >= 10 && (
                 <div className="animate-fade-in" style={{animationDelay: '700ms'}}>
                   <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -156,7 +198,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
                 </div>
               )}
 
-              {/* Trading Heatmap */}
+              {/* Trading Heatmap - Connected to live trade data */}
               {trades.length >= 15 && (
                 <div className="animate-fade-in" style={{animationDelay: '900ms'}}>
                   <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -166,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
                 </div>
               )}
 
-              {/* Recent Trades */}
+              {/* Recent Trades - Connected to live trade data */}
               {trades.length > 0 && (
                 <div className="mt-8 animate-fade-in" style={{animationDelay: '800ms'}}>
                   <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -228,12 +270,28 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
                               "{trade.notes}"
                             </p>
                           )}
+                          <div className="text-xs text-muted-foreground mt-2">
+                            {new Date(trade.created_at).toLocaleString()}
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
                 </div>
               )}
+
+              {/* Data Source Indicator */}
+              <div className="mt-8 p-4 bg-card/50 rounded-lg border border-white/10">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-muted-foreground">All data is live from backend database</span>
+                  </div>
+                  <span className="text-muted-foreground">
+                    Account: {account.name} ({account.type})
+                  </span>
+                </div>
+              </div>
             </div>
           )
         )}

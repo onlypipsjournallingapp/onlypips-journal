@@ -13,17 +13,25 @@ const TradingHeatmap: React.FC<TradingHeatmapProps> = ({ trades }) => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  // Create heatmap data
+  // Create heatmap data with proper error handling
   const heatmapData = days.map(day => 
     hours.map(hour => {
       const dayTrades = trades.filter(trade => {
-        const tradeDate = new Date(trade.created_at);
-        const tradeDayName = tradeDate.toLocaleDateString('en-US', { weekday: 'short' });
-        const tradeHour = tradeDate.getHours();
-        return tradeDayName === day && tradeHour === hour;
+        try {
+          const tradeDate = new Date(trade.created_at);
+          const tradeDayName = tradeDate.toLocaleDateString('en-US', { weekday: 'short' });
+          const tradeHour = tradeDate.getHours();
+          return tradeDayName === day && tradeHour === hour;
+        } catch (error) {
+          console.error('Error parsing trade date:', error);
+          return false;
+        }
       });
       
-      const totalPnL = dayTrades.reduce((sum, trade) => sum + Number(trade.profit_loss), 0);
+      const totalPnL = dayTrades.reduce((sum, trade) => {
+        const pnl = Number(trade.profit_loss);
+        return sum + (isNaN(pnl) ? 0 : pnl);
+      }, 0);
       const tradeCount = dayTrades.length;
       
       return {
@@ -48,12 +56,38 @@ const TradingHeatmap: React.FC<TradingHeatmapProps> = ({ trades }) => {
     return `bg-blue-500 opacity-${Math.round(alpha * 100)}`;
   };
 
+  // Show message if insufficient data
+  if (trades.length < 15) {
+    return (
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Trading Activity Heatmap
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              Need at least 15 trades to generate trading patterns heatmap
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Current trades: {trades.length}/15
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="glass-card">
       <CardHeader>
         <CardTitle className="text-lg font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
           Trading Activity Heatmap
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Based on {trades.length} trades from backend data
+        </p>
       </CardHeader>
       <CardContent>
         <div className="space-y-1">
