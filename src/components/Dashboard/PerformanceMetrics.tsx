@@ -22,12 +22,12 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ trades }) => {
   
   const avgWin = winningTrades.length > 0 ? totalWins / winningTrades.length : 0;
   const avgLoss = losingTrades.length > 0 ? totalLosses / losingTrades.length : 0;
-  const profitFactor = totalLosses > 0 ? totalWins / totalLosses : 0;
+  const profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 3 : 0;
   
   // Sharpe ratio approximation (simplified)
   const returns = trades.map(trade => Number(trade.profit_loss));
-  const avgReturn = returns.reduce((sum, ret) => sum + ret, 0) / returns.length;
-  const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - avgReturn, 2), 0) / returns.length;
+  const avgReturn = returns.length > 0 ? returns.reduce((sum, ret) => sum + ret, 0) / returns.length : 0;
+  const variance = returns.length > 0 ? returns.reduce((sum, ret) => sum + Math.pow(ret - avgReturn, 2), 0) / returns.length : 0;
   const stdDev = Math.sqrt(variance);
   const sharpeRatio = stdDev > 0 ? avgReturn / stdDev : 0;
   
@@ -45,10 +45,13 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ trades }) => {
   
   const maxDrawdownPercent = peak > 0 ? (maxDrawdown / peak) * 100 : 0;
   
-  // Consistency score (based on win streaks and volatility)
-  const consistencyScore = Math.max(0, Math.min(100, 
-    50 + (profitFactor - 1) * 25 - maxDrawdownPercent
-  ));
+  // Fixed consistency score calculation
+  const winRate = trades.length > 0 ? (winningTrades.length / trades.length) * 100 : 0;
+  const profitFactorScore = Math.min(profitFactor * 20, 40); // Max 40 points
+  const drawdownScore = Math.max(30 - maxDrawdownPercent, 0); // Max 30 points, penalty for high drawdown
+  const winRateScore = winRate * 0.3; // Max 30 points (100% win rate * 0.3)
+  
+  const consistencyScore = Math.min(Math.max(profitFactorScore + drawdownScore + winRateScore, 0), 100);
   
   // Risk-adjusted return
   const riskAdjustedReturn = maxDrawdown > 0 ? totalPnL / maxDrawdown : totalPnL;
@@ -74,16 +77,16 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ trades }) => {
       label: "Max Drawdown",
       value: `${maxDrawdownPercent.toFixed(1)}%`,
       target: 20,
-      current: 20 - Math.min(maxDrawdownPercent, 20),
+      current: Math.max(20 - Math.min(maxDrawdownPercent, 20), 0),
       description: "Largest peak-to-trough decline",
       status: maxDrawdownPercent < 10 ? "excellent" : maxDrawdownPercent < 20 ? "good" : maxDrawdownPercent < 30 ? "fair" : "poor"
     },
     {
       label: "Consistency Score",
-      value: `${consistencyScore.toFixed(0)}%`,
+      value: `${Math.round(consistencyScore)}%`,
       target: 100,
       current: consistencyScore,
-      description: "Overall trading consistency",
+      description: "Overall trading consistency based on win rate, profit factor, and drawdown",
       status: consistencyScore > 80 ? "excellent" : consistencyScore > 60 ? "good" : consistencyScore > 40 ? "fair" : "poor"
     }
   ];
@@ -107,6 +110,17 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ trades }) => {
     };
     return colors[status as keyof typeof colors] || colors.poor;
   };
+
+  // Debug logging for consistency score
+  console.log('Consistency Score Debug:', {
+    winRate,
+    profitFactorScore,
+    drawdownScore,
+    winRateScore,
+    consistencyScore,
+    trades: trades.length,
+    winningTrades: winningTrades.length
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -194,7 +208,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ trades }) => {
               <div className="text-xs text-muted-foreground">Risk-Adj Return</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-500">{(winningTrades.length / trades.length * 100).toFixed(1)}%</div>
+              <div className="text-2xl font-bold text-purple-500">{winRate.toFixed(1)}%</div>
               <div className="text-xs text-muted-foreground">Win Rate</div>
             </div>
           </div>
