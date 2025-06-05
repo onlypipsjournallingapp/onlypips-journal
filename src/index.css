@@ -68,4 +68,109 @@
   .neutral-text {
     @apply text-neutral font-medium;
   }
+  
+  /* New component classes for the advanced dashboard */
+  .dashboard-section {
+    @apply space-y-6;
+  }
+  
+  .dashboard-title {
+    @apply text-2xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent;
+  }
+  
+  .dashboard-subtitle {
+    @apply text-xl font-semibold text-muted-foreground;
+  }
+  
+  .card-glow {
+    @apply relative;
+  }
+  
+  .card-glow::before {
+    @apply content-[''] absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-primary/20 to-accent/20 opacity-0 blur-xl transition-opacity duration-500;
+  }
+  
+  .card-glow:hover::before {
+    @apply opacity-100;
+  }
+  
+  .grid-cols-25 {
+    grid-template-columns: auto repeat(24, minmax(0, 1fr));
+  }
+}
+
+@layer utilities {
+  .bg-gradient-blur {
+    @apply bg-gradient-to-br from-background/80 via-background/60 to-background/80 backdrop-blur-xl;
+  }
+  
+  .glow-effect {
+    @apply relative;
+  }
+  
+  .glow-effect::after {
+    content: '';
+    @apply absolute inset-0 rounded-xl opacity-0 transition-opacity duration-500;
+    box-shadow: 0 0 25px 5px theme('colors.primary.DEFAULT');
+  }
+  
+  .glow-effect:hover::after {
+    @apply opacity-25;
+  }
+  
+  .border-gradient {
+    @apply border-2 border-transparent bg-origin-border;
+    background-image: linear-gradient(var(--bg-color, theme('colors.background')), var(--bg-color, theme('colors.background'))),
+                      linear-gradient(to right, theme('colors.primary.DEFAULT'), theme('colors.accent.DEFAULT'));
+    background-clip: padding-box, border-box;
+  }
+}
+
+/* Keyframes and animations */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -32,7 +32,7 @@ const TradeStats: React.FC<TradeStatsProps> = ({ trades }) => {
   const avgProfitLossNumber = totalTrades > 0 ? totalProfitLoss / totalTrades : 0;
   const avgProfitLoss = avgProfitLossNumber.toFixed(1);
   
-  // Prepare chart data
+  // Prepare chart data with enhanced styling
   const chartData = [
     { name: 'Wins', value: wins, fill: '#10b981' },
     { name: 'Losses', value: losses, fill: '#ef4444' },
@@ -72,27 +72,43 @@ const TradeStats: React.FC<TradeStatsProps> = ({ trades }) => {
       </div>
       
       {totalTrades > 0 && (
-        <Card className="glass-card transform transition-all duration-500 opacity-0 translate-y-4 animate-fade-in" style={{animationDelay: '500ms'}}>
+        <Card className="glass-card transform transition-all duration-500 opacity-0 translate-y-4 animate-fade-in hover:shadow-2xl" style={{animationDelay: '500ms'}}>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">
-              Trade Results
+            <CardTitle className="text-lg font-semibold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              Trade Results Distribution
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
-                  <YAxis stroke="#94a3b8" fontSize={12} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#94a3b8" 
+                    fontSize={12}
+                    tick={{ fill: '#94a3b8' }}
+                  />
+                  <YAxis 
+                    stroke="#94a3b8" 
+                    fontSize={12}
+                    tick={{ fill: '#94a3b8' }}
+                  />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#1e293b', 
+                      backgroundColor: 'rgba(30, 41, 59, 0.95)', 
                       border: 'none',
-                      borderRadius: '8px',
-                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)',
+                      borderRadius: '12px',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                      backdropFilter: 'blur(12px)',
                     }}
+                    cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
                   />
-                  <Bar dataKey="value" />
+                  <Bar 
+                    dataKey="value" 
+                    radius={[8, 8, 0, 0]}
+                    stroke="rgba(255, 255, 255, 0.1)"
+                    strokeWidth={1}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -1,8 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
 import TradeStats from '@/components/Dashboard/TradeStats';
+import MetricsGrid from '@/components/Dashboard/MetricsGrid';
+import AdvancedCharts from '@/components/Dashboard/AdvancedCharts';
+import TradingHeatmap from '@/components/Dashboard/TradingHeatmap';
+import PerformanceMetrics from '@/components/Dashboard/PerformanceMetrics';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpCircle, MinusCircle } from 'lucide-react';
+import { ArrowUpCircle, MinusCircle, Sparkles, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { useParams, useNavigate } from "react-router-dom";
@@ -71,92 +75,169 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
   if (!effectiveType || !effectiveName) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {account ? account.name : "Dashboard"}
-          </h1>
-          <p className="text-muted-foreground">
-            {account
-              ? `(${account.type}) - View trades and stats for this account.`
-              : "Account not found."}
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-4 -right-4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-1/2 -left-4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute bottom-0 right-1/3 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '4s'}}></div>
       </div>
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-pulse text-primary">Loading...</div>
-        </div>
-      ) : (
-        account && (
-          <>
-            <TradeStats trades={trades} />
-            {trades.length > 0 && (
-              <div className="mt-8 animate-fade-in" style={{animationDelay: '800ms'}}>
-                <h2 className="text-xl font-semibold mb-4">Recent Trades</h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {trades.slice(0, 3).map((trade) => (
-                    <Card key={trade.id} className="glass-card card-animate">
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between">
-                          <CardTitle className="text-base">{trade.pair}</CardTitle>
-                          <div className={`px-2 py-0.5 rounded-md text-xs font-medium ${
-                            trade.result === 'WIN' ? 'bg-profit/10 text-profit' : 
-                            trade.result === 'LOSS' ? 'bg-loss/10 text-loss' : 
-                            'bg-neutral/10 text-neutral'
-                          }`}>
-                            {trade.result}
-                          </div>
-                        </div>
-                        <CardDescription className="flex items-center text-xs">
-                          {trade.result === 'BREAK EVEN' || trade.is_break_even ? (
-                            <MinusCircle className="h-3 w-3 mr-1 text-neutral" />
-                          ) : trade.direction === 'BUY' ? (
-                            <ArrowUpCircle className="h-3 w-3 mr-1 text-profit" />
-                          ) : (
-                            <ArrowUpCircle className="h-3 w-3 mr-1 text-loss transform rotate-180" />
-                          )}
-                          {trade.direction}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="text-sm">
-                        <div className="grid grid-cols-2 gap-1 mb-2">
-                          {trade.entry_price !== null && trade.entry_price !== undefined && (
-                            <>
-                              <div className="text-muted-foreground">Entry</div>
-                              <div className="text-right">{trade.entry_price}</div>
-                            </>
-                          )}
-                          {trade.exit_price !== null && trade.exit_price !== undefined && (
-                            <>
-                              <div className="text-muted-foreground">Exit</div>
-                              <div className="text-right">{trade.exit_price}</div>
-                            </>
-                          )}
-                          {trade.result !== 'BREAK EVEN' && !trade.is_break_even && (
-                            <>
-                              <div className="text-muted-foreground">P/L</div>
-                              <div className="text-right">
-                                {Number(trade.profit_loss) > 0 ? '+' : ''}{trade.profit_loss}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        {trade.notes && (
-                          <p className="text-xs text-muted-foreground line-clamp-2 mt-2">
-                            {trade.notes}
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+
+      <div className="relative z-10 space-y-8 p-6">
+        {/* Header Section */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 shadow-lg">
+                <Sparkles className="h-6 w-6 text-white" />
               </div>
-            )}
-          </>
-        )
-      )}
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+                  {account ? account.name : "Trading Dashboard"}
+                </h1>
+                <p className="text-muted-foreground">
+                  {account
+                    ? `${account.type} Account - Advanced Analytics Dashboard`
+                    : "Account not found."}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Total Trades</p>
+            <p className="text-2xl font-bold">{trades.length}</p>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="relative">
+              <div className="h-24 w-24 rounded-full border-t-2 border-b-2 border-primary animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center text-primary">Loading</div>
+            </div>
+          </div>
+        ) : (
+          account && (
+            <div className="space-y-8">
+              {/* Advanced Metrics Grid */}
+              <div className="animate-fade-in" style={{animationDelay: '100ms'}}>
+                <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  Performance Overview
+                </h2>
+                <MetricsGrid trades={trades} />
+              </div>
+
+              {/* Standard Stats */}
+              <div className="animate-fade-in" style={{animationDelay: '300ms'}}>
+                <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  Trade Summary
+                </h2>
+                <TradeStats trades={trades} />
+              </div>
+
+              {/* Advanced Charts */}
+              {trades.length >= 5 && (
+                <div className="animate-fade-in" style={{animationDelay: '500ms'}}>
+                  <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    Performance Analytics
+                  </h2>
+                  <AdvancedCharts trades={trades} />
+                </div>
+              )}
+
+              {/* Performance Metrics */}
+              {trades.length >= 10 && (
+                <div className="animate-fade-in" style={{animationDelay: '700ms'}}>
+                  <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    Advanced Risk Metrics
+                  </h2>
+                  <PerformanceMetrics trades={trades} />
+                </div>
+              )}
+
+              {/* Trading Heatmap */}
+              {trades.length >= 15 && (
+                <div className="animate-fade-in" style={{animationDelay: '900ms'}}>
+                  <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    Trading Patterns
+                  </h2>
+                  <TradingHeatmap trades={trades} />
+                </div>
+              )}
+
+              {/* Recent Trades */}
+              {trades.length > 0 && (
+                <div className="mt-8 animate-fade-in" style={{animationDelay: '800ms'}}>
+                  <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    Recent Trades
+                  </h2>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {trades.slice(0, 3).map((trade) => (
+                      <Card 
+                        key={trade.id} 
+                        className="glass-card card-animate border border-white/10 hover:border-white/20"
+                      >
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between">
+                            <CardTitle className="text-base bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{trade.pair}</CardTitle>
+                            <div className={`px-2 py-0.5 rounded-md text-xs font-medium ${
+                              trade.result === 'WIN' ? 'bg-profit/10 text-profit' : 
+                              trade.result === 'LOSS' ? 'bg-loss/10 text-loss' : 
+                              'bg-neutral/10 text-neutral'
+                            }`}>
+                              {trade.result}
+                            </div>
+                          </div>
+                          <CardDescription className="flex items-center text-xs">
+                            {trade.result === 'BREAK EVEN' || trade.is_break_even ? (
+                              <MinusCircle className="h-3 w-3 mr-1 text-neutral" />
+                            ) : trade.direction === 'BUY' ? (
+                              <ArrowUpCircle className="h-3 w-3 mr-1 text-profit" />
+                            ) : (
+                              <ArrowUpCircle className="h-3 w-3 mr-1 text-loss transform rotate-180" />
+                            )}
+                            {trade.direction}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="text-sm">
+                          <div className="grid grid-cols-2 gap-1 mb-2">
+                            {trade.entry_price !== null && trade.entry_price !== undefined && (
+                              <>
+                                <div className="text-muted-foreground">Entry</div>
+                                <div className="text-right">{trade.entry_price}</div>
+                              </>
+                            )}
+                            {trade.exit_price !== null && trade.exit_price !== undefined && (
+                              <>
+                                <div className="text-muted-foreground">Exit</div>
+                                <div className="text-right">{trade.exit_price}</div>
+                              </>
+                            )}
+                            {trade.result !== 'BREAK EVEN' && !trade.is_break_even && (
+                              <>
+                                <div className="text-muted-foreground">P/L</div>
+                                <div className={`text-right ${Number(trade.profit_loss) > 0 ? 'text-profit' : 'text-loss'}`}>
+                                  {Number(trade.profit_loss) > 0 ? '+' : ''}{trade.profit_loss}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          {trade.notes && (
+                            <p className="text-xs text-muted-foreground line-clamp-2 mt-2 italic">
+                              "{trade.notes}"
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        )}
+      </div>
     </div>
   );
 };
