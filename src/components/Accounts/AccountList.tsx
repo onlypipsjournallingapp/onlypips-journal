@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Database } from "@/integrations/supabase/types";
@@ -30,15 +31,20 @@ const AccountList: React.FC<Props> = ({ accounts, onAccountDeleted }) => {
   const { toast } = useToast();
 
   const handleDeleteAccount = async (accountId: string, accountName: string) => {
+    console.log('Starting deletion for account:', accountId, accountName);
+    
     try {
       // Delete the account from the database
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('accounts')
         .delete()
-        .eq('id', accountId);
+        .eq('id', accountId)
+        .select(); // Add select to get confirmation of what was deleted
+
+      console.log('Delete operation result:', { error, data });
 
       if (error) {
-        console.error('Error deleting account:', error);
+        console.error('Supabase delete error:', error);
         toast({
           title: "Error",
           description: "Failed to delete account. Please try again.",
@@ -47,6 +53,19 @@ const AccountList: React.FC<Props> = ({ accounts, onAccountDeleted }) => {
         return;
       }
 
+      // Check if any rows were actually deleted
+      if (!data || data.length === 0) {
+        console.warn('No rows were deleted - account may not exist');
+        toast({
+          title: "Warning",
+          description: "Account may have already been deleted.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Account successfully deleted from database');
+      
       toast({
         title: "Account deleted",
         description: `Account "${accountName}" has been deleted successfully.`,
@@ -54,6 +73,8 @@ const AccountList: React.FC<Props> = ({ accounts, onAccountDeleted }) => {
 
       // Update the local state
       onAccountDeleted(accountId);
+      console.log('Local state updated');
+      
     } catch (error) {
       console.error('Error deleting account:', error);
       toast({

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,18 +18,27 @@ const AccountsPage: React.FC<AccountsPageProps> = ({ userId }) => {
   const [addOpen, setAddOpen] = useState(false);
   const navigate = useNavigate();
 
+  const fetchAccounts = async () => {
+    console.log('Fetching accounts for user:', userId);
+    setLoading(true);
+    
+    const { data, error } = await supabase
+      .from('accounts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true });
+    
+    console.log('Fetch accounts result:', { data, error });
+    
+    setAccounts(data || []);
+    setLoading(false);
+    
+    if (error) {
+      console.error('Error fetching accounts:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchAccounts = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('accounts')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: true });
-      setAccounts(data || []);
-      setLoading(false);
-      if (error) console.error(error);
-    };
     fetchAccounts();
   }, [userId, addOpen]);
 
@@ -40,7 +48,14 @@ const AccountsPage: React.FC<AccountsPageProps> = ({ userId }) => {
   };
 
   const handleAccountDeleted = (accountId: string) => {
+    console.log('Handling account deletion in parent component:', accountId);
     setAccounts((prev) => prev.filter(acc => acc.id !== accountId));
+    
+    // Also refetch from database to ensure consistency
+    setTimeout(() => {
+      console.log('Refetching accounts after deletion');
+      fetchAccounts();
+    }, 1000);
   };
 
   return (
