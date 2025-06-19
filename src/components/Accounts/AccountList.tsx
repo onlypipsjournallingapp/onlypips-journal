@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Database } from "@/integrations/supabase/types";
@@ -32,6 +31,7 @@ const AccountList: React.FC<Props> = ({ accounts, onAccountDeleted }) => {
 
   const handleDeleteAccount = async (accountId: string, accountName: string) => {
     try {
+      // Delete the account from the database
       const { error } = await supabase
         .from('accounts')
         .delete()
@@ -52,6 +52,7 @@ const AccountList: React.FC<Props> = ({ accounts, onAccountDeleted }) => {
         description: `Account "${accountName}" has been deleted successfully.`,
       });
 
+      // Update the local state
       onAccountDeleted(accountId);
     } catch (error) {
       console.error('Error deleting account:', error);
