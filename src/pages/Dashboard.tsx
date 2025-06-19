@@ -1,10 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import TradeStats from '@/components/Dashboard/TradeStats';
 import MetricsGrid from '@/components/Dashboard/MetricsGrid';
 import AdvancedCharts from '@/components/Dashboard/AdvancedCharts';
 import TradingHeatmap from '@/components/Dashboard/TradingHeatmap';
 import PerformanceMetrics from '@/components/Dashboard/PerformanceMetrics';
+import MonthlyRecap from '@/components/Dashboard/MonthlyRecap';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowUpCircle, MinusCircle, Sparkles, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -162,6 +162,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, accountType, accountName 
         ) : (
           account && (
             <div className="space-y-8">
+              {/* Monthly Recap */}
+              <div className="animate-fade-in" style={{animationDelay: '50ms'}}>
+                <MonthlyRecap trades={trades} />
+              </div>
+
               {/* Advanced Metrics Grid - Connected to live trade data */}
               <div className="animate-fade-in" style={{animationDelay: '100ms'}}>
                 <h2 className="text-2xl font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
