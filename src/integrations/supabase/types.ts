@@ -9,6 +9,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      account_info: {
+        Row: {
+          alias: string | null
+          balance: number
+          equity: number
+          free_margin: number
+          id: string
+          leverage: number
+          login: number
+          margin: number
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          alias?: string | null
+          balance: number
+          equity: number
+          free_margin: number
+          id?: string
+          leverage: number
+          login: number
+          margin: number
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          alias?: string | null
+          balance?: number
+          equity?: number
+          free_margin?: number
+          id?: string
+          leverage?: number
+          login?: number
+          margin?: number
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_info_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       accounts: {
         Row: {
           created_at: string
@@ -35,6 +82,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      api_audit_logs: {
+        Row: {
+          endpoint: string
+          id: string
+          ip_address: string
+          timestamp: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          endpoint: string
+          id?: string
+          ip_address: string
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          endpoint?: string
+          id?: string
+          ip_address?: string
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bank_details: {
         Row: {
@@ -463,6 +545,59 @@ export type Database = {
           },
         ]
       }
+      trade_info: {
+        Row: {
+          account_alias: string | null
+          current_price: number
+          id: string
+          open_price: number
+          open_time: string
+          profit: number
+          symbol: string
+          ticket: number
+          timestamp: string
+          type: number
+          user_id: string | null
+          volume: number
+        }
+        Insert: {
+          account_alias?: string | null
+          current_price: number
+          id?: string
+          open_price: number
+          open_time: string
+          profit: number
+          symbol: string
+          ticket: number
+          timestamp?: string
+          type: number
+          user_id?: string | null
+          volume: number
+        }
+        Update: {
+          account_alias?: string | null
+          current_price?: number
+          id?: string
+          open_price?: number
+          open_time?: string
+          profit?: number
+          symbol?: string
+          ticket?: number
+          timestamp?: string
+          type?: number
+          user_id?: string | null
+          volume?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_info_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trades: {
         Row: {
           account_id: string | null
@@ -608,6 +743,30 @@ export type Database = {
           },
         ]
       }
+      users: {
+        Row: {
+          api_key: string | null
+          api_key_expires_at: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+        }
+        Insert: {
+          api_key?: string | null
+          api_key_expires_at?: string | null
+          created_at?: string
+          id: string
+          is_active?: boolean | null
+        }
+        Update: {
+          api_key?: string | null
+          api_key_expires_at?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -619,6 +778,10 @@ export type Database = {
           usd_strong_count: number
           usd_weak_count: number
         }[]
+      }
+      revoke_api_key: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
