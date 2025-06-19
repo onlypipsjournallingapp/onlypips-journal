@@ -3,16 +3,66 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Database } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
-import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type Account = Database['public']['Tables']['accounts']['Row'];
 
 interface Props {
   accounts: Account[];
+  onAccountDeleted: (accountId: string) => void;
 }
 
-const AccountList: React.FC<Props> = ({ accounts }) => {
+const AccountList: React.FC<Props> = ({ accounts, onAccountDeleted }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleDeleteAccount = async (accountId: string, accountName: string) => {
+    try {
+      const { error } = await supabase
+        .from('accounts')
+        .delete()
+        .eq('id', accountId);
+
+      if (error) {
+        console.error('Error deleting account:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete account. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Account deleted",
+        description: `Account "${accountName}" has been deleted successfully.`,
+      });
+
+      onAccountDeleted(accountId);
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!accounts.length) {
     return (
       <div className="text-center text-muted-foreground">
@@ -20,21 +70,63 @@ const AccountList: React.FC<Props> = ({ accounts }) => {
       </div>
     );
   }
+
   return (
     <div className="grid md:grid-cols-2 gap-4 mt-4">
       {accounts.map((acc) => (
         <Card 
           key={acc.id} 
-          className="p-4 flex justify-between items-center cursor-pointer hover:bg-muted/50 transition"
-          onClick={() =>
-            navigate(`/dashboard/${acc.type.toLowerCase()}/${encodeURIComponent(acc.name)}`)
-          }
+          className="p-4 flex justify-between items-center hover:bg-muted/50 transition"
         >
-          <div>
+          <div 
+            className="flex-1 cursor-pointer"
+            onClick={() =>
+              navigate(`/dashboard/${acc.type.toLowerCase()}/${encodeURIComponent(acc.name)}`)
+            }
+          >
             <div className="font-semibold">{acc.name}</div>
             <div className="text-xs text-muted-foreground uppercase">{acc.type}</div>
           </div>
-          <ArrowRight className="w-4 h-4" />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="cursor-pointer"
+              onClick={() =>
+                navigate(`/dashboard/${acc.type.toLowerCase()}/${encodeURIComponent(acc.name)}`)
+              }
+            >
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Account</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete the account "{acc.name}"? This action cannot be undone and will permanently remove all associated data.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDeleteAccount(acc.id, acc.name)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete Account
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </Card>
       ))}
     </div>

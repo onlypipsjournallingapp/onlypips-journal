@@ -39,6 +39,10 @@ const AccountsPage: React.FC<AccountsPageProps> = ({ userId }) => {
     setAddOpen(false);
   };
 
+  const handleAccountDeleted = (accountId: string) => {
+    setAccounts((prev) => prev.filter(acc => acc.id !== accountId));
+  };
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold tracking-tight">Your Accounts</h1>
@@ -57,7 +61,10 @@ const AccountsPage: React.FC<AccountsPageProps> = ({ userId }) => {
       {loading ? (
         <div className="py-12 text-center">Loading...</div>
       ) : (
-        <AccountList accounts={accounts} />
+        <AccountList 
+          accounts={accounts} 
+          onAccountDeleted={handleAccountDeleted}
+        />
       )}
     </div>
   );
