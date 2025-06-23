@@ -1,5 +1,5 @@
 
-import { createClientComponentClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import { Database } from '@/integrations/supabase/types';
 
 type Trade = Database['public']['Tables']['trades']['Row'];
@@ -12,6 +12,7 @@ export interface PerformanceMetrics {
   avgRiskReward: number;
   profitFactor: number;
   avgHoldingTime: number;
+  performanceLabel: PerformanceLabel;
   strategyPerformance: Array<{
     strategyId: string;
     strategyName: string;
@@ -30,6 +31,15 @@ export interface PerformanceMetrics {
     withChecklist: { trades: number; winRate: number };
     withoutChecklist: { trades: number; winRate: number };
   };
+  riskRewardAnalysis: {
+    averageRR: number;
+    tradesWithRR: number;
+    rrDistribution: Array<{
+      range: string;
+      count: number;
+    }>;
+  };
+  insights: string[];
 }
 
 export type PerformanceLabel = 'Excellent' | 'Consistent' | 'Improving' | 'Volatile' | 'Declining';
@@ -40,22 +50,12 @@ export interface PerformanceInsight {
 }
 
 export class PerformanceAnalysisService {
-  private supabase = createClientComponentClient<Database>();
-
-  async generatePerformanceReport(userId: string): Promise<{
-    metrics: PerformanceMetrics;
-    insights: PerformanceInsight[];
-    performanceLabel: PerformanceLabel;
-  }> {
+  async analyzeUserPerformance(userId: string): Promise<PerformanceMetrics> {
     const trades = await this.fetchUserTrades(userId);
     const strategies = await this.fetchUserStrategies(userId);
     
     if (trades.length === 0) {
-      return {
-        metrics: this.getEmptyMetrics(),
-        insights: [{ type: 'neutral', message: 'Start trading to see your performance analysis.' }],
-        performanceLabel: 'Improving'
-      };
+      return this.getEmptyMetrics();
     }
 
     const metrics = this.calculateMetrics(trades, strategies);
@@ -65,11 +65,15 @@ export class PerformanceAnalysisService {
     // Cache the report
     await this.cacheReport(userId, metrics, performanceLabel, trades.length);
 
-    return { metrics, insights, performanceLabel };
+    return {
+      ...metrics,
+      performanceLabel,
+      insights: insights.map(i => i.message)
+    };
   }
 
   private async fetchUserTrades(userId: string): Promise<Trade[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from('trades')
       .select('*')
       .eq('user_id', userId)
@@ -80,7 +84,7 @@ export class PerformanceAnalysisService {
   }
 
   private async fetchUserStrategies(userId: string): Promise<Strategy[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from('strategies')
       .select('*')
       .eq('user_id', userId);
@@ -89,7 +93,7 @@ export class PerformanceAnalysisService {
     return data || [];
   }
 
-  private calculateMetrics(trades: Trade[], strategies: Strategy[]): PerformanceMetrics {
+  private calculateMetrics(trades: Trade[], strategies: Strategy[]): Omit<PerformanceMetrics, 'performanceLabel' | 'insights'> {
     const totalTrades = trades.length;
     const winningTrades = trades.filter(t => t.result === 'WIN').length;
     const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
@@ -113,7 +117,8 @@ export class PerformanceAnalysisService {
       avgHoldingTime,
       strategyPerformance: this.calculateStrategyPerformance(trades, strategies),
       monthlyPerformance: this.calculateMonthlyPerformance(trades),
-      checklistCorrelation: this.calculateChecklistCorrelation(trades)
+      checklistCorrelation: this.calculateChecklistCorrelation(trades),
+      riskRewardAnalysis: this.calculateRiskRewardAnalysis(trades)
     };
   }
 
@@ -220,7 +225,36 @@ export class PerformanceAnalysisService {
     };
   }
 
-  private generateInsights(metrics: PerformanceMetrics, trades: Trade[]): PerformanceInsight[] {
+  private calculateRiskRewardAnalysis(trades: Trade[]) {
+    const tradesWithRR = trades.filter(t => t.risk_reward_ratio && t.risk_reward_ratio > 0);
+    const avgRR = tradesWithRR.length > 0 
+      ? tradesWithRR.reduce((sum, t) => sum + (t.risk_reward_ratio || 0), 0) / tradesWithRR.length 
+      : 0;
+
+    // Calculate distribution
+    const distribution = [
+      { range: '< 1:1', count: 0 },
+      { range: '1:1 - 2:1', count: 0 },
+      { range: '2:1 - 3:1', count: 0 },
+      { range: '> 3:1', count: 0 }
+    ];
+
+    tradesWithRR.forEach(trade => {
+      const rr = trade.risk_reward_ratio || 0;
+      if (rr < 1) distribution[0].count++;
+      else if (rr < 2) distribution[1].count++;
+      else if (rr < 3) distribution[2].count++;
+      else distribution[3].count++;
+    });
+
+    return {
+      averageRR: avgRR,
+      tradesWithRR: tradesWithRR.length,
+      rrDistribution: distribution
+    };
+  }
+
+  private generateInsights(metrics: Omit<PerformanceMetrics, 'performanceLabel' | 'insights'>, trades: Trade[]): PerformanceInsight[] {
     const insights: PerformanceInsight[] = [];
 
     // Win rate insights
@@ -271,7 +305,7 @@ export class PerformanceAnalysisService {
     return insights;
   }
 
-  private calculatePerformanceLabel(metrics: PerformanceMetrics, trades: Trade[]): PerformanceLabel {
+  private calculatePerformanceLabel(metrics: Omit<PerformanceMetrics, 'performanceLabel' | 'insights'>, trades: Trade[]): PerformanceLabel {
     const score = this.calculatePerformanceScore(metrics, trades);
     
     if (score >= 80) return 'Excellent';
@@ -281,7 +315,7 @@ export class PerformanceAnalysisService {
     return 'Declining';
   }
 
-  private calculatePerformanceScore(metrics: PerformanceMetrics, trades: Trade[]): number {
+  private calculatePerformanceScore(metrics: Omit<PerformanceMetrics, 'performanceLabel' | 'insights'>, trades: Trade[]): number {
     let score = 0;
 
     // Win rate (0-30 points)
@@ -329,20 +363,27 @@ export class PerformanceAnalysisService {
       avgRiskReward: 0,
       profitFactor: 0,
       avgHoldingTime: 0,
+      performanceLabel: 'Improving',
       strategyPerformance: [],
       monthlyPerformance: [],
       checklistCorrelation: {
         withChecklist: { trades: 0, winRate: 0 },
         withoutChecklist: { trades: 0, winRate: 0 }
-      }
+      },
+      riskRewardAnalysis: {
+        averageRR: 0,
+        tradesWithRR: 0,
+        rrDistribution: []
+      },
+      insights: ['Start trading to see your performance analysis.']
     };
   }
 
-  private async cacheReport(userId: string, metrics: PerformanceMetrics, performanceLabel: PerformanceLabel, tradesAnalyzed: number) {
+  private async cacheReport(userId: string, metrics: Omit<PerformanceMetrics, 'performanceLabel' | 'insights'>, performanceLabel: PerformanceLabel, tradesAnalyzed: number) {
     try {
       const reportData = JSON.stringify(metrics);
       
-      const { error } = await this.supabase
+      const { error } = await supabase
         .from('user_performance_reports')
         .upsert({
           user_id: userId,

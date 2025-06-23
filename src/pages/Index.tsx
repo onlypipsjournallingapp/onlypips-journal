@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import { createClientComponentClient } from "@supabase/supabase-js";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/supabase-js";
 import Auth from "./Auth";
 import Dashboard from "./Dashboard";
@@ -9,7 +9,7 @@ import Trades from "./Trades";
 import AccountsPage from "./Accounts";
 import MainLayout from "@/components/Layout/MainLayout";
 import GrowthPath from "./GrowthPath";
-import ChecklistPage from "@/components/Checklist/ChecklistPage";
+import ChecklistPage from "./ChecklistPage";
 import Predictor from "./Predictor";
 import AdminEvents from "./AdminEvents";
 import AdminNotifications from "./AdminNotifications";
@@ -50,7 +50,7 @@ const Index = () => {
   }
 
   if (!session) {
-    return <Auth />;
+    return <Auth onLogin={() => {}} />;
   }
 
   return (

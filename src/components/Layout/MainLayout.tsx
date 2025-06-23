@@ -5,13 +5,12 @@ import NavBar from './NavBar';
 interface MainLayoutProps {
   children: React.ReactNode;
   onLogout: () => void;
-  userId?: string;
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout, userId }) => {
+const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
   return (
     <div className="min-h-screen flex flex-col">
-      <NavBar onLogout={onLogout} userId={userId} />
+      <NavBar onLogout={onLogout} />
       <main className="flex-1 container py-6 md:py-8">
         {children}
       </main>

@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, TrendingDown, Target, Clock, BarChart3, Lightbulb } from "lucide-react";
-import { PerformanceAnalysisService, PerformanceMetrics } from "@/services/performanceAnalysis";
+import { performanceAnalysisService, PerformanceMetrics } from "@/services/performanceAnalysis";
 import { useToast } from "@/hooks/use-toast";
 
 interface PerformanceReportProps {
@@ -21,7 +21,7 @@ const PerformanceReport: React.FC<PerformanceReportProps> = ({ userId }) => {
   const generateReport = async () => {
     setIsLoading(true);
     try {
-      const reportMetrics = await PerformanceAnalysisService.analyzeUserPerformance(userId);
+      const reportMetrics = await performanceAnalysisService.analyzeUserPerformance(userId);
       setMetrics(reportMetrics);
       
       toast({
@@ -129,15 +129,15 @@ const PerformanceReport: React.FC<PerformanceReportProps> = ({ userId }) => {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  {metrics.totalProfitLoss >= 0 ? (
+                  {metrics.totalPnL >= 0 ? (
                     <TrendingUp className="h-4 w-4 text-green-500" />
                   ) : (
                     <TrendingDown className="h-4 w-4 text-red-500" />
                   )}
                   <span className="text-sm font-medium">Total P/L</span>
                 </div>
-                <div className={`text-2xl font-bold mt-2 ${metrics.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(metrics.totalProfitLoss)}
+                <div className={`text-2xl font-bold mt-2 ${metrics.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(metrics.totalPnL)}
                 </div>
               </CardContent>
             </Card>
@@ -161,7 +161,7 @@ const PerformanceReport: React.FC<PerformanceReportProps> = ({ userId }) => {
                   <span className="text-sm font-medium">Avg. Hold Time</span>
                 </div>
                 <div className="text-2xl font-bold mt-2">
-                  {metrics.averageHoldingTime > 0 ? formatDuration(metrics.averageHoldingTime) : 'N/A'}
+                  {metrics.avgHoldingTime > 0 ? formatDuration(metrics.avgHoldingTime) : 'N/A'}
                 </div>
               </CardContent>
             </Card>
@@ -188,14 +188,14 @@ const PerformanceReport: React.FC<PerformanceReportProps> = ({ userId }) => {
                             <p className="text-sm text-muted-foreground">
                               {strategy.trades} trades • {strategy.winRate.toFixed(1)}% win rate
                             </p>
-                            {strategy.averageRR > 0 && (
+                            {strategy.avgRR > 0 && (
                               <p className="text-sm text-muted-foreground">
-                                Avg R:R: {strategy.averageRR.toFixed(2)}
+                                Avg R:R: {strategy.avgRR.toFixed(2)}
                               </p>
                             )}
                           </div>
-                          <div className={`text-lg font-bold ${strategy.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatCurrency(strategy.totalProfitLoss)}
+                          <div className={`text-lg font-bold ${strategy.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(strategy.totalPnL)}
                           </div>
                         </div>
                       </CardContent>
@@ -225,8 +225,8 @@ const PerformanceReport: React.FC<PerformanceReportProps> = ({ userId }) => {
                             {month.trades} trades • {month.winRate.toFixed(1)}% win rate
                           </p>
                         </div>
-                        <div className={`text-lg font-bold ${month.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(month.profitLoss)}
+                        <div className={`text-lg font-bold ${month.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(month.pnl)}
                         </div>
                       </div>
                     </CardContent>

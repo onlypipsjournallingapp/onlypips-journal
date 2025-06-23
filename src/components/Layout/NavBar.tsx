@@ -9,12 +9,7 @@ import {
   User, 
   LogOut, 
   Menu,
-  MoreHorizontal,
-  BarChart3,
-  Target,
-  CheckSquare,
-  Zap,
-  Bell
+  BarChart3
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -23,7 +18,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import NotificationBell from "@/components/Notifications/NotificationBell";
 
 interface NavBarProps {
   onLogout: () => void;
@@ -37,17 +31,11 @@ const NavBar: React.FC<NavBarProps> = ({ onLogout }) => {
     return location.pathname === path;
   };
 
-  const primaryNavItems = [
+  const mainNavItems = [
     { path: "/dashboard", label: "Dashboard", icon: Home },
     { path: "/trades", label: "Trades", icon: TrendingUp },
-    { path: "/accounts", label: "Accounts", icon: CreditCard }
-  ];
-
-  const secondaryNavItems = [
-    { path: "/performance", label: "Performance Report", icon: BarChart3 },
-    { path: "/growth-path", label: "Growth Path", icon: Target },
-    { path: "/checklist", label: "Strategy Checklist", icon: CheckSquare },
-    { path: "/predictor", label: "Market Predictor", icon: Zap }
+    { path: "/accounts", label: "Accounts", icon: CreditCard },
+    { path: "/performance", label: "Performance", icon: BarChart3 }
   ];
 
   return (
@@ -64,7 +52,7 @@ const NavBar: React.FC<NavBarProps> = ({ onLogout }) => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
-            {primaryNavItems.map(({ path, label, icon: Icon }) => (
+            {mainNavItems.map(({ path, label, icon: Icon }) => (
               <Link key={path} to={path}>
                 <Button
                   variant={isActivePath(path) ? "default" : "ghost"}
@@ -76,32 +64,10 @@ const NavBar: React.FC<NavBarProps> = ({ onLogout }) => {
                 </Button>
               </Link>
             ))}
-
-            {/* More Features Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                  <MoreHorizontal className="h-4 w-4" />
-                  More
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {secondaryNavItems.map(({ path, label, icon: Icon }) => (
-                  <DropdownMenuItem key={path} asChild>
-                    <Link to={path} className="flex items-center gap-2 w-full">
-                      <Icon className="h-4 w-4" />
-                      {label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
 
           {/* Right side items */}
           <div className="flex items-center space-x-2">
-            <NotificationBell />
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
@@ -132,7 +98,7 @@ const NavBar: React.FC<NavBarProps> = ({ onLogout }) => {
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 space-y-2">
-            {[...primaryNavItems, ...secondaryNavItems].map(({ path, label, icon: Icon }) => (
+            {mainNavItems.map(({ path, label, icon: Icon }) => (
               <Link key={path} to={path} onClick={() => setIsMobileMenuOpen(false)}>
                 <Button
                   variant={isActivePath(path) ? "default" : "ghost"}
