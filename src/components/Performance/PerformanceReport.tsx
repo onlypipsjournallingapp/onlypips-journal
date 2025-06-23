@@ -129,15 +129,15 @@ const PerformanceReport: React.FC<PerformanceReportProps> = ({ userId }) => {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  {metrics.totalPnL >= 0 ? (
+                  {metrics.totalProfitLoss >= 0 ? (
                     <TrendingUp className="h-4 w-4 text-green-500" />
                   ) : (
                     <TrendingDown className="h-4 w-4 text-red-500" />
                   )}
                   <span className="text-sm font-medium">Total P/L</span>
                 </div>
-                <div className={`text-2xl font-bold mt-2 ${metrics.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(metrics.totalPnL)}
+                <div className={`text-2xl font-bold mt-2 ${metrics.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(metrics.totalProfitLoss)}
                 </div>
               </CardContent>
             </Card>
@@ -161,7 +161,7 @@ const PerformanceReport: React.FC<PerformanceReportProps> = ({ userId }) => {
                   <span className="text-sm font-medium">Avg. Hold Time</span>
                 </div>
                 <div className="text-2xl font-bold mt-2">
-                  {metrics.avgHoldingTime > 0 ? formatDuration(metrics.avgHoldingTime) : 'N/A'}
+                  {metrics.averageHoldingTime > 0 ? formatDuration(metrics.averageHoldingTime) : 'N/A'}
                 </div>
               </CardContent>
             </Card>
@@ -188,14 +188,14 @@ const PerformanceReport: React.FC<PerformanceReportProps> = ({ userId }) => {
                             <p className="text-sm text-muted-foreground">
                               {strategy.trades} trades • {strategy.winRate.toFixed(1)}% win rate
                             </p>
-                            {strategy.avgRR > 0 && (
+                            {strategy.averageRR > 0 && (
                               <p className="text-sm text-muted-foreground">
-                                Avg R:R: {strategy.avgRR.toFixed(2)}
+                                Avg R:R: {strategy.averageRR.toFixed(2)}
                               </p>
                             )}
                           </div>
-                          <div className={`text-lg font-bold ${strategy.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatCurrency(strategy.totalPnL)}
+                          <div className={`text-lg font-bold ${strategy.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(strategy.totalProfitLoss)}
                           </div>
                         </div>
                       </CardContent>
@@ -225,8 +225,8 @@ const PerformanceReport: React.FC<PerformanceReportProps> = ({ userId }) => {
                             {month.trades} trades • {month.winRate.toFixed(1)}% win rate
                           </p>
                         </div>
-                        <div className={`text-lg font-bold ${month.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(month.pnl)}
+                        <div className={`text-lg font-bold ${month.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(month.profitLoss)}
                         </div>
                       </div>
                     </CardContent>
