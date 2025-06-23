@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import { createClientComponentClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import Auth from "./Auth";
 import Dashboard from "./Dashboard";
@@ -9,14 +9,13 @@ import Trades from "./Trades";
 import AccountsPage from "./Accounts";
 import MainLayout from "@/components/Layout/MainLayout";
 import GrowthPath from "./GrowthPath";
-import ChecklistPage from "@/components/Checklist/ChecklistPage";
+import ChecklistPage from "./ChecklistPage";
 import Predictor from "./Predictor";
 import AdminEvents from "./AdminEvents";
 import AdminNotifications from "./AdminNotifications";
 import Performance from "./Performance";
 
 const Index = () => {
-  const [supabaseClient] = useState(() => createClientComponentClient());
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -24,21 +23,25 @@ const Index = () => {
   useEffect(() => {
     const getSession = async () => {
       setLoading(true);
-      const { data: { session } } = await supabaseClient.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setLoading(false);
     };
 
     getSession();
 
-    supabaseClient.auth.onAuthStateChange((event, session) => {
+    supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
     });
-  }, [supabaseClient]);
+  }, []);
 
   const handleLogout = async () => {
-    await supabaseClient.auth.signOut();
+    await supabase.auth.signOut();
     navigate('/');
+  };
+
+  const handleLogin = () => {
+    // Login handling is done in Auth component
   };
 
   if (loading) {
@@ -50,7 +53,7 @@ const Index = () => {
   }
 
   if (!session) {
-    return <Auth />;
+    return <Auth onLogin={handleLogin} />;
   }
 
   return (
