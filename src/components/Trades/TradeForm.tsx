@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCurrencyPairs } from "@/hooks/useCurrencyPairs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TradeFormProps {
   onSubmit: (tradeData: any) => void;
@@ -28,9 +29,33 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
   const [notes, setNotes] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [tradeType, setTradeType] = useState<'REAL' | 'DEMO'>('REAL');
+  
+  // New fields for performance analysis
+  const [strategyUsed, setStrategyUsed] = useState('');
+  const [entryTime, setEntryTime] = useState('');
+  const [exitTime, setExitTime] = useState('');
+  const [riskRewardRatio, setRiskRewardRatio] = useState('');
+  
   const [isLoading, setIsLoading] = useState(false);
+  const [strategies, setStrategies] = useState<any[]>([]);
   const { toast } = useToast();
   const { pairs, isLoading: pairsLoading } = useCurrencyPairs();
+
+  // Fetch user's strategies
+  useEffect(() => {
+    const fetchStrategies = async () => {
+      const { data, error } = await supabase
+        .from('strategies')
+        .select('*')
+        .order('name');
+      
+      if (data && !error) {
+        setStrategies(data);
+      }
+    };
+    
+    fetchStrategies();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -38,11 +63,23 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
     }
   };
 
+  const calculateHoldingDuration = () => {
+    if (entryTime && exitTime) {
+      const entry = new Date(entryTime);
+      const exit = new Date(exitTime);
+      const diffMs = exit.getTime() - entry.getTime();
+      return Math.round(diffMs / (1000 * 60)); // Convert to minutes
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      const holdingDuration = calculateHoldingDuration();
+      
       const formData = {
         pair,
         direction,
@@ -52,11 +89,18 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
         notes,
         is_break_even: isBreakEven,
         screenshot,
-        trade_type: tradeType
+        trade_type: tradeType,
+        // New performance fields
+        strategy_used: strategyUsed || null,
+        entry_time: entryTime || null,
+        exit_time: exitTime || null,
+        risk_reward_ratio: riskRewardRatio ? parseFloat(riskRewardRatio) : null,
+        holding_duration_minutes: holdingDuration
       };
 
       await onSubmit(formData);
       
+      // Reset form
       setPair('');
       setDirection('BUY');
       setEntryPrice('');
@@ -65,6 +109,10 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
       setIsBreakEven(false);
       setNotes('');
       setScreenshot(null);
+      setStrategyUsed('');
+      setEntryTime('');
+      setExitTime('');
+      setRiskRewardRatio('');
       
       toast({
         title: "Trade Added",
@@ -145,6 +193,22 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
               </div>
             </RadioGroup>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="strategy">Strategy Used (Optional)</Label>
+            <Select value={strategyUsed} onValueChange={setStrategyUsed}>
+              <SelectTrigger id="strategy">
+                <SelectValue placeholder="Select strategy" />
+              </SelectTrigger>
+              <SelectContent>
+                {strategies.map((strategy) => (
+                  <SelectItem key={strategy.id} value={strategy.id}>
+                    {strategy.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -169,6 +233,40 @@ const TradeForm: React.FC<TradeFormProps> = ({ onSubmit }) => {
                 onChange={(e) => setExitPrice(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="entryTime">Entry Time (Optional)</Label>
+              <Input
+                id="entryTime"
+                type="datetime-local"
+                value={entryTime}
+                onChange={(e) => setEntryTime(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="exitTime">Exit Time (Optional)</Label>
+              <Input
+                id="exitTime"
+                type="datetime-local"
+                value={exitTime}
+                onChange={(e) => setExitTime(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="rrRatio">Risk:Reward Ratio (Optional)</Label>
+            <Input
+              id="rrRatio"
+              placeholder="e.g., 1.5 (for 1:1.5)"
+              type="number"
+              step="0.1"
+              value={riskRewardRatio}
+              onChange={(e) => setRiskRewardRatio(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Enter the reward multiple (e.g., 2 for 1:2 risk-reward)</p>
           </div>
 
           <div className="space-y-2">

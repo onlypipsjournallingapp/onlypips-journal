@@ -1,92 +1,74 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Auth from './Auth';
-import Dashboard from './Dashboard';
-import Trades from './Trades';
-import Predictor from './Predictor';
-import GrowthPath from './GrowthPath';
-import ChecklistPage from '@/components/Checklist/ChecklistPage';
-import MainLayout from '@/components/Layout/MainLayout';
-import { supabase } from '@/integrations/supabase/client';
-import { Session } from '@supabase/supabase-js';
-import AdminNotifications from './AdminNotifications';
+import { useState, useEffect } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Session } from "@supabase/supabase-js";
+import Auth from "./Auth";
+import Dashboard from "./Dashboard";
+import Trades from "./Trades";
 import AccountsPage from "./Accounts";
-import PaymentApprovalPage from '@/components/Admin/PaymentApprovalPage';
+import MainLayout from "@/components/Layout/MainLayout";
+import GrowthPath from "./GrowthPath";
+import ChecklistPage from "./ChecklistPage";
+import Predictor from "./Predictor";
+import AdminEvents from "./Admin/Events";
+import AdminNotifications from "./Admin/Notifications";
+import Performance from "./Performance";
 
 const Index = () => {
-  const [user, setUser] = useState<any>(null);
+  const [supabaseClient] = useState(() => createClientComponentClient());
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        console.log("Auth state changed:", event, currentSession?.user?.email);
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-      }
-    );
+    const getSession = async () => {
+      setLoading(true);
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      setSession(session);
+      setLoading(false);
+    };
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log("Initial session check:", currentSession?.user?.email);
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setIsLoading(false);
+    getSession();
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      setSession(session);
     });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleLogin = (userData: any) => {
-    console.log("Login handler triggered", userData);
-    setUser(userData.user);
-    setSession(userData);
-  };
+  }, [supabaseClient]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
+    await supabaseClient.auth.signOut();
+    navigate('/');
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-primary">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="animate-pulse text-primary text-lg">Loading...</div>
       </div>
     );
   }
 
-  if (!user) {
-    return <Auth onLogin={handleLogin} />;
+  if (!session) {
+    return <Auth />;
   }
 
   return (
-    <MainLayout onLogout={handleLogout} userId={user.id}>
-      <Routes>
-        {/* "Accounts" summary page */}
-        <Route path="/accounts" element={<AccountsPage userId={user.id} />} />
-        {/* Dynamic dashboards */}
-        <Route path="/dashboard/:accountType/:accountName" element={
-          <Dashboard userId={user.id} />
-        } />
-        <Route path="/trades" element={<Trades userId={user.id} />} />
-        <Route path="/predictor" element={<Predictor userId={user.id} />} />
-        <Route path="/growth-path" element={<GrowthPath userId={user.id} />} />
-        <Route path="/checklist" element={<ChecklistPage userId={user.id} />} />
-        <Route path="/admin" element={<AdminNotifications />} />
-        <Route path="/admin/payments" element={
-          <div className="p-6">
-            <PaymentApprovalPage />
-          </div>
-        } />
-        {/* Legacy root fallback: redirect to accounts summary */}
-        <Route path="/" element={<Navigate to="/accounts" replace />} />
-        <Route path="*" element={<Navigate to="/accounts" replace />} />
-      </Routes>
-    </MainLayout>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <MainLayout onLogout={handleLogout}>
+        <Routes>
+          <Route path="/" element={<Dashboard userId={session.user.id} />} />
+          <Route path="/dashboard" element={<Dashboard userId={session.user.id} />} />
+          <Route path="/trades" element={<Trades userId={session.user.id} />} />
+          <Route path="/accounts" element={<AccountsPage userId={session.user.id} />} />
+          <Route path="/performance" element={<Performance userId={session.user.id} />} />
+          <Route path="/growth-path" element={<GrowthPath userId={session.user.id} />} />
+          <Route path="/checklist" element={<ChecklistPage userId={session.user.id} />} />
+          <Route path="/predictor" element={<Predictor userId={session.user.id} />} />
+          <Route path="/admin/events" element={<AdminEvents />} />
+          <Route path="/admin/notifications" element={<AdminNotifications />} />
+        </Routes>
+      </MainLayout>
+    </div>
   );
 };
 

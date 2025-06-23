@@ -43,6 +43,7 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
   const handleSubmitTrade = async (tradeData: any) => {
     try {
       if (!selectedAccountId) throw new Error("Please select an account first.");
+      
       const newTradeData = {
         user_id: userId,
         pair: tradeData.pair,
@@ -55,15 +56,24 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
         is_break_even: tradeData.is_break_even || false,
         notes: tradeData.notes || null,
         trade_type: tradeData.trade_type,
-        account_id: selectedAccountId
+        account_id: selectedAccountId,
+        // New performance analysis fields
+        strategy_used: tradeData.strategy_used || null,
+        entry_time: tradeData.entry_time || null,
+        exit_time: tradeData.exit_time || null,
+        risk_reward_ratio: tradeData.risk_reward_ratio || null,
+        holding_duration_minutes: tradeData.holding_duration_minutes || null
       };
+      
       // Insert new trade into Supabase
       const { data, error } = await supabase
         .from('trades')
         .insert(newTradeData)
         .select()
         .single();
+      
       if (error) throw error;
+      
       // If there's a screenshot, upload it
       let screenshotUrl = null;
       if (tradeData.screenshot && data) {
@@ -72,25 +82,32 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
         const { error: uploadError } = await supabase.storage
           .from('trades')
           .upload(fileName, tradeData.screenshot);
+        
         if (uploadError) throw uploadError;
+        
         // Get the public URL for the uploaded file
         const { data: { publicUrl } } = supabase.storage
           .from('trades')
           .getPublicUrl(fileName);
+        
         screenshotUrl = publicUrl;
+        
         // Update the trade with screenshot URL
         if (screenshotUrl) {
           const { error: updateError } = await supabase
             .from('trades')
             .update({ screenshot_url: screenshotUrl })
             .eq('id', data.id);
+          
           if (updateError) throw updateError;
         }
       }
+      
       const finalTrade = {
         ...data,
         screenshot_url: screenshotUrl
       } as Trade;
+      
       setTrades([finalTrade, ...trades]);
       toast({
         title: "Trade Added",
@@ -156,4 +173,5 @@ const Trades: React.FC<TradesProps> = ({ userId }) => {
     </div>
   );
 };
+
 export default Trades;

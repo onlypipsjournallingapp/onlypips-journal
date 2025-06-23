@@ -601,56 +601,84 @@ export type Database = {
       trades: {
         Row: {
           account_id: string | null
+          checklist_items_checked: Json | null
+          checklist_used_id: string | null
           created_at: string
           direction: string
           entry_price: number | null
+          entry_time: string | null
           exit_price: number | null
+          exit_time: string | null
+          holding_duration_minutes: number | null
           id: string
           is_break_even: boolean | null
           notes: string | null
           pair: string
           profit_loss: number
           result: string
+          risk_reward_ratio: number | null
           screenshot_url: string | null
+          strategy_used: string | null
           trade_type: string
           updated_at: string
           user_id: string
         }
         Insert: {
           account_id?: string | null
+          checklist_items_checked?: Json | null
+          checklist_used_id?: string | null
           created_at?: string
           direction: string
           entry_price?: number | null
+          entry_time?: string | null
           exit_price?: number | null
+          exit_time?: string | null
+          holding_duration_minutes?: number | null
           id?: string
           is_break_even?: boolean | null
           notes?: string | null
           pair: string
           profit_loss: number
           result: string
+          risk_reward_ratio?: number | null
           screenshot_url?: string | null
+          strategy_used?: string | null
           trade_type?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           account_id?: string | null
+          checklist_items_checked?: Json | null
+          checklist_used_id?: string | null
           created_at?: string
           direction?: string
           entry_price?: number | null
+          entry_time?: string | null
           exit_price?: number | null
+          exit_time?: string | null
+          holding_duration_minutes?: number | null
           id?: string
           is_break_even?: boolean | null
           notes?: string | null
           pair?: string
           profit_loss?: number
           result?: string
+          risk_reward_ratio?: number | null
           screenshot_url?: string | null
+          strategy_used?: string | null
           trade_type?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_trades_strategy"
+            columns: ["strategy_used"]
+            isOneToOne: false
+            referencedRelation: "strategies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trades_account_id_fkey"
             columns: ["account_id"]
@@ -694,6 +722,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_performance_reports: {
+        Row: {
+          generated_at: string
+          id: string
+          performance_label: string
+          report_data: Json
+          trades_analyzed: number
+          user_id: string
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          performance_label: string
+          report_data: Json
+          trades_analyzed?: number
+          user_id: string
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          performance_label?: string
+          report_data?: Json
+          trades_analyzed?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       user_purchases: {
         Row: {
