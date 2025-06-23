@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClientComponentClient } from "@supabase/supabase-js";
 import { Session } from "@supabase/supabase-js";
 import Auth from "./Auth";
 import Dashboard from "./Dashboard";
@@ -8,10 +9,10 @@ import Trades from "./Trades";
 import AccountsPage from "./Accounts";
 import MainLayout from "@/components/Layout/MainLayout";
 import GrowthPath from "./GrowthPath";
-import ChecklistPage from "./ChecklistPage";
+import ChecklistPage from "@/components/Checklist/ChecklistPage";
 import Predictor from "./Predictor";
-import AdminEvents from "./Admin/Events";
-import AdminNotifications from "./Admin/Notifications";
+import AdminEvents from "./AdminEvents";
+import AdminNotifications from "./AdminNotifications";
 import Performance from "./Performance";
 
 const Index = () => {
