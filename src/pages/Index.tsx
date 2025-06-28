@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -11,8 +10,8 @@ import MainLayout from "@/components/Layout/MainLayout";
 import GrowthPath from "./GrowthPath";
 import ChecklistPage from "./ChecklistPage";
 import Predictor from "./Predictor";
-import AdminEvents from "./AdminEvents";
-import AdminNotifications from "./AdminNotifications";
+import AdminEvents from "./Admin/Events";
+import AdminNotifications from "./Admin/Notifications";
 import Performance from "./Performance";
 
 const Index = () => {
@@ -50,7 +49,7 @@ const Index = () => {
   }
 
   if (!session) {
-    return <Auth onLogin={() => {}} />;
+    return <Auth />;
   }
 
   return (
