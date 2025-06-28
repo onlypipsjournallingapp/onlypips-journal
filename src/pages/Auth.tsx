@@ -5,11 +5,7 @@ import { TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-interface AuthProps {
-  onLogin: (userData: any) => void;
-}
-
-const Auth: React.FC<AuthProps> = ({ onLogin }) => {
+const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -24,11 +20,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       if (error) throw error;
       
       console.log("Login successful:", data);
-      onLogin(data);
       
       toast({
         title: "Login Successful",
-        description: "Welcome back to OnlyPips Journal!",
+        description: "Welcome back to TraderJournal!",
       });
     } catch (error: any) {
       console.error('Login error:', error);
@@ -54,11 +49,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       if (error) throw error;
       
       console.log("Registration successful:", data);
-      onLogin(data);
       
       toast({
         title: "Registration Successful",
-        description: "Welcome to OnlyPips Journal! Your account has been created.",
+        description: "Welcome to TraderJournal! Your account has been created.",
       });
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -80,7 +74,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           <TrendingUp className="mr-2 h-4 w-4" />
           <span className="text-sm font-medium">Track. Analyze. Improve.</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">OnlyPips Journal</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">TraderJournal</h1>
         <p className="text-muted-foreground">The trading journal for serious traders</p>
       </div>
       

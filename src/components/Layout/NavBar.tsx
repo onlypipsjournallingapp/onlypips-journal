@@ -13,8 +13,7 @@ import {
   BarChart3,
   Target,
   CheckSquare,
-  Zap,
-  Bell
+  Zap
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -24,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import NotificationBell from "@/components/Notifications/NotificationBell";
+import SupportButton from "@/components/Affiliate/SupportButton";
 
 interface NavBarProps {
   onLogout: () => void;
@@ -100,6 +100,10 @@ const NavBar: React.FC<NavBarProps> = ({ onLogout }) => {
 
           {/* Right side items */}
           <div className="flex items-center space-x-2">
+            <div className="hidden sm:block">
+              <SupportButton />
+            </div>
+            
             <NotificationBell />
             
             <DropdownMenu>
@@ -109,6 +113,14 @@ const NavBar: React.FC<NavBarProps> = ({ onLogout }) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <div className="sm:hidden">
+                  <DropdownMenuItem asChild>
+                    <div className="w-full">
+                      <SupportButton />
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </div>
                 <DropdownMenuItem onClick={onLogout} className="flex items-center gap-2">
                   <LogOut className="h-4 w-4" />
                   Logout
