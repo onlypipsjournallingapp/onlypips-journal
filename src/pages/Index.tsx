@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/supabase-js";
 import Auth from "./Auth";
 import Dashboard from "./Dashboard";
@@ -16,10 +16,7 @@ import AdminNotifications from "./AdminNotifications";
 import Performance from "./Performance";
 
 const Index = () => {
-  const [supabaseClient] = useState(() => createClient(
-    "https://ewzsiiclccdhszlbqzex.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3enNpaWNsY2NkaHN6bGJxemV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMDc1NzMsImV4cCI6MjA1OTY4MzU3M30.6vMbsVs0N4h_hmlB-kOMRfaEfkbrffQGYSAhc6XA1uY"
-  ));
+  const [supabaseClient] = useState(() => createClientComponentClient());
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
