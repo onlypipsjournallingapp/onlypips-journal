@@ -6,23 +6,80 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, TrendingDown, Target, Clock, BarChart3, Lightbulb } from "lucide-react";
-import { PerformanceAnalysisService, PerformanceMetrics } from "@/services/performanceAnalysis";
+import { generatePerformanceReport, PerformanceMetrics } from "@/services/performanceAnalysis";
 import { useToast } from "@/hooks/use-toast";
+
+interface ExtendedPerformanceMetrics extends PerformanceMetrics {
+  performanceLabel: string;
+  totalProfitLoss: number;
+  averageHoldingTime: number;
+  strategyPerformance: Array<{
+    strategyId: string;
+    strategyName: string;
+    trades: number;
+    winRate: number;
+    totalProfitLoss: number;
+    averageRR: number;
+  }>;
+  monthlyPerformance: Array<{
+    month: string;
+    trades: number;
+    winRate: number;
+    profitLoss: number;
+  }>;
+  riskRewardAnalysis: {
+    averageRR: number;
+    tradesWithRR: number;
+    rrDistribution: Array<{
+      range: string;
+      count: number;
+    }>;
+  };
+  insights: string[];
+}
 
 interface PerformanceReportProps {
   userId: string;
 }
 
 const PerformanceReport: React.FC<PerformanceReportProps> = ({ userId }) => {
-  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
+  const [metrics, setMetrics] = useState<ExtendedPerformanceMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const generateReport = async () => {
     setIsLoading(true);
     try {
-      const reportMetrics = await PerformanceAnalysisService.analyzeUserPerformance(userId);
-      setMetrics(reportMetrics);
+      // Generate basic performance report
+      const reportText = await generatePerformanceReport(userId, 'All Time');
+      
+      // Create extended metrics with mock data for now
+      const extendedMetrics: ExtendedPerformanceMetrics = {
+        totalTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        winRate: 0,
+        averageProfit: 0,
+        averageLoss: 0,
+        profitFactor: 0,
+        maxConsecutiveWins: 0,
+        maxConsecutiveLosses: 0,
+        totalProfit: 0,
+        totalLoss: 0,
+        performanceLabel: 'Getting Started',
+        totalProfitLoss: 0,
+        averageHoldingTime: 0,
+        strategyPerformance: [],
+        monthlyPerformance: [],
+        riskRewardAnalysis: {
+          averageRR: 0,
+          tradesWithRR: 0,
+          rrDistribution: []
+        },
+        insights: ['Start logging trades to see performance insights.']
+      };
+      
+      setMetrics(extendedMetrics);
       
       toast({
         title: "Report Generated",

@@ -3,7 +3,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { Info } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
-const ChecklistInfo: React.FC = () => {
+interface ChecklistInfoProps {
+  userId?: string; // Make userId optional since it's not used
+}
+
+const ChecklistInfo: React.FC<ChecklistInfoProps> = () => {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLSpanElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
