@@ -83,42 +83,6 @@ export type Database = {
         }
         Relationships: []
       }
-      affiliate_info: {
-        Row: {
-          active: boolean
-          broker_name: string
-          button_label: string
-          created_at: string
-          id: string
-          link: string
-          logo_url: string
-          message_body: string
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          broker_name: string
-          button_label?: string
-          created_at?: string
-          id?: string
-          link: string
-          logo_url: string
-          message_body: string
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          broker_name?: string
-          button_label?: string
-          created_at?: string
-          id?: string
-          link?: string
-          logo_url?: string
-          message_body?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       api_audit_logs: {
         Row: {
           endpoint: string
@@ -654,7 +618,6 @@ export type Database = {
           result: string
           risk_reward_ratio: number | null
           screenshot_url: string | null
-          strategy_id: string | null
           strategy_used: string | null
           trade_type: string
           updated_at: string
@@ -679,7 +642,6 @@ export type Database = {
           result: string
           risk_reward_ratio?: number | null
           screenshot_url?: string | null
-          strategy_id?: string | null
           strategy_used?: string | null
           trade_type?: string
           updated_at?: string
@@ -704,7 +666,6 @@ export type Database = {
           result?: string
           risk_reward_ratio?: number | null
           screenshot_url?: string | null
-          strategy_id?: string | null
           strategy_used?: string | null
           trade_type?: string
           updated_at?: string
@@ -723,13 +684,6 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trades_strategy_id_fkey"
-            columns: ["strategy_id"]
-            isOneToOne: false
-            referencedRelation: "strategies"
             referencedColumns: ["id"]
           },
         ]
@@ -849,7 +803,6 @@ export type Database = {
           api_key: string | null
           api_key_expires_at: string | null
           created_at: string
-          has_supported: boolean | null
           id: string
           is_active: boolean | null
         }
@@ -857,7 +810,6 @@ export type Database = {
           api_key?: string | null
           api_key_expires_at?: string | null
           created_at?: string
-          has_supported?: boolean | null
           id: string
           is_active?: boolean | null
         }
@@ -865,7 +817,6 @@ export type Database = {
           api_key?: string | null
           api_key_expires_at?: string | null
           created_at?: string
-          has_supported?: boolean | null
           id?: string
           is_active?: boolean | null
         }

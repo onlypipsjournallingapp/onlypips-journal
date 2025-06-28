@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/supabase-js";
 import Auth from "./Auth";
 import Dashboard from "./Dashboard";
@@ -11,11 +10,12 @@ import MainLayout from "@/components/Layout/MainLayout";
 import GrowthPath from "./GrowthPath";
 import ChecklistPage from "./ChecklistPage";
 import Predictor from "./Predictor";
-import AdminEvents from "./AdminEvents";
-import AdminNotifications from "./AdminNotifications";
+import AdminEvents from "./Admin/Events";
+import AdminNotifications from "./Admin/Notifications";
 import Performance from "./Performance";
 
 const Index = () => {
+  const [supabaseClient] = useState(() => createClientComponentClient());
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -23,22 +23,20 @@ const Index = () => {
   useEffect(() => {
     const getSession = async () => {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabaseClient.auth.getSession();
       setSession(session);
       setLoading(false);
     };
 
     getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
       setSession(session);
     });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  }, [supabaseClient]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     navigate('/');
   };
 
