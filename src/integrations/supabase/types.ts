@@ -618,7 +618,6 @@ export type Database = {
           result: string
           risk_reward_ratio: number | null
           screenshot_url: string | null
-          strategy_id: string | null
           strategy_used: string | null
           trade_type: string
           updated_at: string
@@ -643,7 +642,6 @@ export type Database = {
           result: string
           risk_reward_ratio?: number | null
           screenshot_url?: string | null
-          strategy_id?: string | null
           strategy_used?: string | null
           trade_type?: string
           updated_at?: string
@@ -668,7 +666,6 @@ export type Database = {
           result?: string
           risk_reward_ratio?: number | null
           screenshot_url?: string | null
-          strategy_id?: string | null
           strategy_used?: string | null
           trade_type?: string
           updated_at?: string
@@ -687,13 +684,6 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trades_strategy_id_fkey"
-            columns: ["strategy_id"]
-            isOneToOne: false
-            referencedRelation: "strategies"
             referencedColumns: ["id"]
           },
         ]
